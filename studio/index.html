@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Studio Floor — Tekydis</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Tekydis Studio Floor — live control portal. Dark night-studio. */
+  :root{
+    --floor:#0a1326; --floor-2:#0c1830; --panel:#12223f; --panel-2:#16294a;
+    --line:#22365c; --ink:#eef3fb; --muted:#8ea3c4; --faint:#5f769c;
+    --accent:#d7fd53; --amber:#f6b545; --cyan:#59d3e6; --violet:#b48cf2; --red:#f2776a;
+    --display:'Teko',system-ui,sans-serif;
+    --body:'IBM Plex Sans',system-ui,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,monospace;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #13254a 0%, transparent 60%), var(--floor);
+    color:var(--ink); font-family:var(--body); line-height:1.5; -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a{color:var(--cyan)}
+  .wrap{max-width:1040px; margin:0 auto; padding:22px max(16px,env(safe-area-inset-left,0px)) 48px;}
+
+  /* header */
+  .top{display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:18px}
+  .brand .eyebrow{font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint)}
+  .brand h1{font-family:var(--display); font-weight:600; font-size:40px; line-height:.9; margin:2px 0 0; letter-spacing:.01em}
+  .top-right{display:flex; align-items:center; gap:10px; margin-left:auto; flex-wrap:wrap}
+  .pill{display:inline-flex; align-items:center; gap:7px; font-family:var(--mono); font-size:12px; letter-spacing:.1em;
+    padding:6px 11px; border:1px solid var(--line); border-radius:999px; background:#0e1b34; white-space:nowrap}
+  .pill .dot{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+  .pill.ok .dot{background:var(--accent); box-shadow:0 0 8px var(--accent)}
+  .pill.err .dot{background:var(--red); box-shadow:0 0 8px var(--red)}
+  .clock{font-family:var(--mono); font-size:13px; color:var(--muted); font-variant-numeric:tabular-nums}
+
+  /* needs band */
+  .needs{border:1px solid rgba(246,181,69,.4); border-radius:16px;
+    background:linear-gradient(180deg,rgba(246,181,69,.12),rgba(246,181,69,.03)); padding:14px 16px; margin-bottom:22px}
+  .needs h2{display:flex;align-items:center;gap:9px;margin:0 0 10px;font-family:var(--display);font-weight:600;font-size:22px;color:var(--amber)}
+  .needs h2 .badge{font-family:var(--mono);font-size:11px;font-weight:500;background:var(--amber);color:#2a1c04;padding:2px 8px;border-radius:999px}
+  .needs ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .needs li{display:flex;gap:11px;align-items:flex-start;padding:10px 12px;background:#0f1b31;border:1px solid var(--line);border-radius:11px}
+  .needs .src{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);background:rgba(246,181,69,.12);padding:3px 8px;border-radius:6px;white-space:nowrap;flex:none;margin-top:1px}
+  .needs .txt{min-width:0;font-size:13.5px;flex:1}
+  .needs .resolve{flex:none;font-family:var(--mono);font-size:11px;color:var(--accent);background:transparent;border:1px solid rgba(215,253,83,.4);border-radius:8px;padding:5px 9px;cursor:pointer}
+  .needs .resolve:hover{background:rgba(215,253,83,.12)}
+  .needs .empty{font-size:13px;color:var(--faint);font-style:italic}
+
+  /* pods */
+  .pod{margin-bottom:22px}
+  .pod-h{display:flex;align-items:center;gap:12px;margin:0 2px 11px}
+  .pod-h span{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .pod-h .ln{height:1px;flex:1;background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 12px)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:13px}
+
+  .card{position:relative;text-align:left;width:100%;border:1px solid var(--line);border-radius:15px;
+    background:linear-gradient(180deg,var(--panel),var(--floor-2));padding:14px;cursor:pointer;color:inherit;font:inherit;overflow:hidden}
+  .card:hover{border-color:var(--faint)}
+  .card:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .card .row1{display:flex;align-items:center;gap:11px;margin-bottom:11px}
+  .av{width:40px;height:40px;border-radius:11px;flex:none;display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:22px;color:#0a1326;position:relative}
+  .av .light{position:absolute;right:-3px;bottom:-3px;width:13px;height:13px;border-radius:50%;border:2.5px solid var(--floor-2);background:var(--faint)}
+  .who{min-width:0}
+  .who .nm{font-weight:600;font-size:14px;line-height:1.15}
+  .who .rl{font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+  .lvlrow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .lvl{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+  .lvl b{color:var(--accent);font-weight:500}
+  .xpbar{height:5px;border-radius:3px;background:#0d1a30;overflow:hidden;border:1px solid var(--line)}
+  .xpbar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--accent))}
+  .task{margin-top:10px;font-size:12.5px;color:var(--muted);min-height:1.2em;overflow-wrap:anywhere}
+  .status{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;padding:4px 9px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+  .status .sl{width:7px;height:7px;border-radius:50%;background:var(--faint)}
+
+  /* status variants (set via data-status) */
+  .card[data-status="working"] .light,.card[data-status="working"] .status .sl{background:var(--accent);box-shadow:0 0 8px var(--accent)}
+  .card[data-status="working"] .status{color:var(--accent);border-color:rgba(215,253,83,.3)}
+  .card[data-status="waiting_on_you"] .light,.card[data-status="waiting_on_you"] .status .sl{background:var(--amber);box-shadow:0 0 8px var(--amber)}
+  .card[data-status="waiting_on_you"] .status{color:var(--amber);border-color:rgba(246,181,69,.35)}
+  .card[data-status="waiting_on_room"] .light,.card[data-status="waiting_on_room"] .status .sl{background:var(--violet)}
+  .card[data-status="waiting_on_room"] .status{color:var(--violet);border-color:rgba(180,140,242,.3)}
+  .card[data-status="meeting"] .light,.card[data-status="meeting"] .status .sl{background:var(--cyan)}
+  .card[data-status="meeting"] .status{color:var(--cyan);border-color:rgba(89,211,230,.3)}
+  .card[data-status="stuck"] .light,.card[data-status="stuck"] .status .sl{background:var(--red);box-shadow:0 0 8px var(--red)}
+  .card[data-status="stuck"] .status{color:var(--red);border-color:rgba(242,119,106,.35)}
+  .card[data-status="idle"]{opacity:.9}
+
+  /* projects */
+  .proj{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel);margin-bottom:9px}
+  .proj .pn{font-weight:600;font-size:14px}
+  .proj .pmeta{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  .proj .bar{flex:1;height:6px;border-radius:3px;background:#0d1a30;overflow:hidden;border:1px solid var(--line);min-width:60px}
+  .proj .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--accent))}
+  .proj .tag{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+
+  /* composer */
+  .compose{margin-top:8px;border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px}
+  .compose label{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+  .compose .ib{display:flex;gap:9px;margin-top:9px}
+  .compose textarea{flex:1;min-width:0;background:#0d1a30;border:1px solid var(--line);border-radius:10px;color:var(--ink);font:inherit;font-size:13.5px;padding:10px;resize:vertical;min-height:44px}
+  .compose button{flex:none;align-self:flex-end;background:var(--accent);color:#0a1326;border:none;border-radius:10px;font-family:var(--mono);font-weight:500;font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:0 16px;cursor:pointer}
+  .compose button:disabled{opacity:.5;cursor:default}
+  .compose .hint{margin-top:8px;font-size:11.5px;color:var(--faint)}
+
+  .sec-h{font-family:var(--display);font-weight:600;font-size:24px;margin:26px 2px 12px}
+
+  /* detail drawer */
+  .scrim{position:fixed;inset:0;background:rgba(4,8,18,.6);opacity:0;pointer-events:none;transition:opacity .2s;z-index:40}
+  .scrim.open{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(440px,100%);background:var(--floor-2);border-left:1px solid var(--line);
+    transform:translateX(100%);transition:transform .22s ease;z-index:50;overflow-y:auto;padding:22px max(18px,env(safe-area-inset-right,0px)) 40px 18px}
+  .drawer.open{transform:translateX(0)}
+  .drawer .x{position:absolute;top:16px;right:16px;background:transparent;border:1px solid var(--line);border-radius:9px;color:var(--muted);font-size:16px;width:34px;height:34px;cursor:pointer}
+  .d-av{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;font-family:var(--display);font-weight:600;font-size:30px;color:#0a1326;margin-bottom:12px}
+  .d-nm{font-family:var(--display);font-weight:600;font-size:30px;line-height:1}
+  .d-rl{font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:16px}
+  .d-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .d-box{border:1px solid var(--line);border-radius:11px;background:var(--panel);padding:11px 12px}
+  .d-box .k{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+  .d-box .v{font-size:15px;font-weight:600;margin-top:3px}
+  .d-sec{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:16px 0 8px}
+  .d-note{font-size:12.5px;color:var(--muted);line-height:1.55}
+  .d-ladder{display:flex;flex-direction:column;gap:5px}
+  .d-ladder .lv{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--faint);padding:5px 9px;border:1px solid transparent;border-radius:8px}
+  .d-ladder .lv.cur{color:var(--ink);border-color:var(--line);background:var(--panel)}
+  .d-ladder .lv b{font-family:var(--mono);color:var(--accent);width:28px}
+
+  .foot{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);font-size:12px;color:var(--faint);line-height:1.6}
+  [hidden]{display:none!important}
+
+  /* login */
+  .login{min-height:100vh;display:grid;place-items:center;padding:24px max(16px,env(safe-area-inset-left,0px))}
+  .login-card{width:min(400px,100%);border:1px solid var(--line);border-radius:18px;background:linear-gradient(180deg,var(--panel),var(--floor-2));padding:26px 22px}
+  .login-card .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+  .login-card h1{font-family:var(--display);font-weight:600;font-size:40px;line-height:.9;margin:4px 0 10px}
+  .login-sub{font-size:13.5px;color:var(--muted);margin:0 0 18px}
+  .login-card label{display:block;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:6px}
+  .login-card input{width:100%;background:#0d1a30;border:1px solid var(--line);border-radius:10px;color:var(--ink);font:inherit;font-size:16px;padding:12px}
+  .login-card input:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+  .login-card button{margin-top:12px;width:100%;min-height:46px;background:var(--accent);color:#0a1326;border:none;border-radius:10px;font-family:var(--mono);font-weight:500;font-size:13px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+  .login-card button:disabled{opacity:.55;cursor:default}
+  .login-msg{margin:14px 0 0;font-size:13px;color:var(--muted);min-height:1.2em}
+  .login-msg.err{color:var(--red)}
+  .login-msg.ok{color:var(--accent)}
+  button.pill{cursor:pointer;color:var(--muted);font-family:var(--mono);font-size:12px}
+  button.pill:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+  @media (max-width:560px){ .brand h1{font-size:34px} .d-grid{grid-template-columns:1fr} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="login" id="login" hidden>
+  <div class="login-card">
+    <div class="eyebrow">Tekydis · AI Studio</div>
+    <h1>Studio Floor</h1>
+    <p class="login-sub">Sign in with your email. You'll get a one-tap login link.</p>
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="email" required placeholder="you@example.com">
+      <button type="submit" id="loginBtn">Send login link</button>
+    </form>
+    <p class="login-msg" id="loginMsg" role="status" aria-live="polite"></p>
+  </div>
+</section>
+
+<div class="wrap" id="app" hidden>
+  <div class="top">
+    <div class="brand">
+      <div class="eyebrow">Tekydis · AI Studio</div>
+      <h1>Studio Floor</h1>
+    </div>
+    <div class="top-right">
+      <span class="pill" id="conn"><span class="dot"></span><span id="connTxt">connecting…</span></span>
+      <span class="clock" id="clock">—</span>
+      <button class="pill" id="signout" type="button">Sign out</button>
+    </div>
+  </div>
+
+  <section class="needs">
+    <h2>Waiting on you <span class="badge" id="needsN">0</span></h2>
+    <ul id="needsList"><li class="empty">Loading…</li></ul>
+  </section>
+
+  <div id="pods"></div>
+
+  <h2 class="sec-h">Projects</h2>
+  <div id="projects"></div>
+
+  <h2 class="sec-h">Message the CEO</h2>
+  <div class="compose">
+    <label for="msg">Send an instruction to the CEO</label>
+    <div class="ib">
+      <textarea id="msg" placeholder="e.g. Run prospecting for Nabeul — 3 cafés and 3 car-rental agencies with weak online presence."></textarea>
+      <button id="send" disabled>Send</button>
+    </div>
+    <div class="hint" id="sendHint">The CEO reads these and acts when the studio is running (Claude Code open, or a scheduled run). Nothing is sent to anyone outside the studio without you.</div>
+  </div>
+
+  <div class="foot">
+    <b>Studio Floor</b> — your live view of the Tekydis AI studio, reading the shared board.
+    Status updates as the agents work. This page shows real data from your board; it never
+    sends anything to a client or spends anything — those always wait for you.
+  </div>
+</div>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" aria-hidden="true"></aside>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+  // ---- your board (public anon key — safe for a front-end) ----
+  const SUPABASE_URL = "https://cihffyetlncwgtuopyed.supabase.co";
+  const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpaGZmeWV0bG5jd2d0dW9weWVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM1NzQ5ODAsImV4cCI6MjEwOTE1MDk4MH0.zulkBkpRR8axKJB9UEZGqtiQHe3UbZ-5LEoV--CVLIc";
+  const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+    auth: { flowType: 'implicit', persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+  });
+
+  const POD_ORDER = ["command","design","engineering","quality","growth","creative","business"];
+  const POD_LABEL = {command:"Command",design:"Design Pod",engineering:"Engineering Pod",quality:"Quality",growth:"Growth Pod",creative:"Creative",business:"Business"};
+  const AV_COLOR = {command:"#d7fd53",design:"#b48cf2",engineering:"#f6b545",quality:"#59d3e6",growth:"#9ce86f",creative:"#f2a0d0",business:"#8fb8ff"};
+  const LEVELS = ["", "Trainee","Associate","Junior","Specialist","Senior","Lead","Principal","Expert","Master","Legend"];
+  const STATUS_LABEL = {idle:"Idle",working:"Working",waiting_on_you:"Waiting on you",waiting_on_room:"Waiting on a room",stuck:"Stuck",meeting:"In meeting"};
+
+  const esc = s => (s==null?"":String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const initials = n => n.replace(/[^A-Za-z ]/g,"").split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join("").toUpperCase()||"·";
+
+  let AGENTS = [];
+
+  function setConn(ok,msg){
+    const p=document.getElementById('conn'); p.className='pill '+(ok?'ok':'err');
+    document.getElementById('connTxt').textContent=msg;
+    document.getElementById('send').disabled=!ok;
+  }
+
+  async function load(){
+    try{
+      const [a,n,pr] = await Promise.all([
+        db.from('agents').select('*'),
+        db.from('needs').select('*').eq('resolved',false).order('created_at',{ascending:true}),
+        db.from('projects').select('*').order('updated_at',{ascending:false}),
+      ]);
+      if(a.error) throw a.error;
+      AGENTS = a.data||[];
+      renderPods(AGENTS);
+      renderNeeds(n.data||[]);
+      renderProjects(pr.data||[]);
+      setConn(true,"live");
+    }catch(e){
+      setConn(false,"connection error");
+      console.error(e);
+    }
+  }
+
+  function renderPods(agents){
+    const byPod={};
+    agents.forEach(ag=>{ (byPod[ag.pod]=byPod[ag.pod]||[]).push(ag); });
+    const host=document.getElementById('pods'); host.innerHTML="";
+    POD_ORDER.forEach(pod=>{
+      const list=byPod[pod]; if(!list||!list.length) return;
+      list.sort((x,y)=> x.slug==='ceo'?-1 : y.slug==='ceo'?1 : x.name.localeCompare(y.name));
+      const sec=document.createElement('div'); sec.className='pod';
+      sec.innerHTML=`<div class="pod-h"><span>${POD_LABEL[pod]||pod}</span><div class="ln"></div></div>`;
+      const grid=document.createElement('div'); grid.className='grid';
+      list.forEach(ag=>grid.appendChild(card(ag)));
+      sec.appendChild(grid); host.appendChild(sec);
+    });
+  }
+
+  function card(ag){
+    const b=document.createElement('button'); b.className='card'; b.dataset.status=ag.status||'idle';
+    const col=AV_COLOR[ag.pod]||'#9ab';
+    const xp=ag.xp||0, pct=Math.max(4,Math.min(100, xp%100 || (xp>0?100:4)));
+    b.innerHTML=`
+      <div class="row1">
+        <span class="av" style="background:${col}">${initials(ag.name)}<span class="light"></span></span>
+        <span class="who"><span class="nm">${esc(ag.name)}</span><span class="rl">${esc(POD_LABEL[ag.pod]||ag.pod)}</span></span>
+      </div>
+      <div class="lvlrow"><span class="lvl">LVL <b>${ag.level||1}</b> · ${LEVELS[ag.level||1]||""}</span><span class="lvl">${xp} XP</span></div>
+      <div class="xpbar"><i style="width:${pct}%"></i></div>
+      <div class="task">${ag.current_task?esc(ag.current_task):'<span style="color:var(--faint)">—</span>'}</div>
+      <span class="status"><span class="sl"></span>${STATUS_LABEL[ag.status]||ag.status||'Idle'}</span>`;
+    b.addEventListener('click',()=>openDrawer(ag));
+    return b;
+  }
+
+  function renderNeeds(list){
+    document.getElementById('needsN').textContent=list.length;
+    const ul=document.getElementById('needsList');
+    if(!list.length){ ul.innerHTML='<li class="empty">Nothing needs you right now.</li>'; return; }
+    ul.innerHTML="";
+    list.forEach(nd=>{
+      const li=document.createElement('li');
+      li.innerHTML=`<span class="src">${esc(nd.source)}</span><span class="txt">${esc(nd.body)}</span>`;
+      const btn=document.createElement('button'); btn.className='resolve'; btn.textContent='Mark done';
+      btn.addEventListener('click',async()=>{ btn.disabled=true; await db.from('needs').update({resolved:true}).eq('id',nd.id); load(); });
+      li.appendChild(btn); ul.appendChild(li);
+    });
+  }
+
+  function renderProjects(list){
+    const host=document.getElementById('projects');
+    if(!list.length){ host.innerHTML='<div class="proj"><span class="pmeta" style="color:var(--faint)">No active projects. Tell the CEO what to start.</span></div>'; return; }
+    host.innerHTML="";
+    list.forEach(p=>{
+      const d=document.createElement('div'); d.className='proj';
+      d.innerHTML=`<div><div class="pn">${esc(p.name)}</div><div class="pmeta">${esc(p.pipeline)} · ${esc(p.status)}</div></div>
+        <div class="bar"><i style="width:${Math.max(2,Math.min(100,p.progress||0))}%"></i></div>
+        <span class="tag">${p.progress||0}%</span>`;
+      host.appendChild(d);
+    });
+  }
+
+  // drawer / agent page
+  const scrim=document.getElementById('scrim'), drawer=document.getElementById('drawer');
+  function closeDrawer(){ drawer.classList.remove('open'); scrim.classList.remove('open'); drawer.setAttribute('aria-hidden','true'); }
+  scrim.addEventListener('click',closeDrawer);
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeDrawer(); });
+
+  function openDrawer(ag){
+    const col=AV_COLOR[ag.pod]||'#9ab';
+    const ladder=LEVELS.map((nm,i)=> i===0?"":`<div class="lv ${i===(ag.level||1)?'cur':''}"><b>L${i}</b> ${nm}</div>`).join("");
+    drawer.innerHTML=`
+      <button class="x" aria-label="Close">✕</button>
+      <div class="d-av" style="background:${col}">${initials(ag.name)}</div>
+      <div class="d-nm">${esc(ag.name)}</div>
+      <div class="d-rl">${esc(POD_LABEL[ag.pod]||ag.pod)} · ${STATUS_LABEL[ag.status]||ag.status||'Idle'}</div>
+      <div class="d-grid">
+        <div class="d-box"><div class="k">Level</div><div class="v">L${ag.level||1} · ${LEVELS[ag.level||1]||""}</div></div>
+        <div class="d-box"><div class="k">XP</div><div class="v">${ag.xp||0}</div></div>
+      </div>
+      <div class="d-sec">Working on</div>
+      <div class="d-note">${ag.current_task?esc(ag.current_task):'Nothing right now.'}</div>
+      <div class="d-sec">What it learned</div>
+      <div class="d-note">Lessons &amp; growth live in the engine (studio/memory/${esc(ag.slug)}/). They'll appear here once the studio syncs its weekly growth cards to the board.</div>
+      <div class="d-sec">Level ladder</div>
+      <div class="d-ladder">${ladder}</div>`;
+    drawer.querySelector('.x').addEventListener('click',closeDrawer);
+    drawer.classList.add('open'); scrim.classList.add('open'); drawer.setAttribute('aria-hidden','false');
+  }
+
+  // message the CEO
+  const sendBtn=document.getElementById('send'), msgBox=document.getElementById('msg');
+  sendBtn.addEventListener('click',async()=>{
+    const body=msgBox.value.trim(); if(!body) return;
+    sendBtn.disabled=true;
+    const {error}=await db.from('messages').insert({sender:'founder',body});
+    if(error){ document.getElementById('sendHint').textContent="Couldn't send — "+error.message; sendBtn.disabled=false; return; }
+    msgBox.value="";
+    document.getElementById('sendHint').textContent="Queued for the CEO. It will pick this up when the studio next runs.";
+    setTimeout(()=>sendBtn.disabled=false,400);
+  });
+
+  // clock
+  function tick(){
+    try{ document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Tunis',hour:'2-digit',minute:'2-digit'})+" · Tunis"; }
+    catch(e){ document.getElementById('clock').textContent=new Date().toLocaleTimeString(); }
+  }
+  tick(); setInterval(tick,1000);
+
+  // ---- login gate ----
+  const loginEl=document.getElementById('login'), appEl=document.getElementById('app');
+  let pollTimer=null;
+  function showApp(){ loginEl.hidden=true; appEl.hidden=false; if(!pollTimer){ load(); pollTimer=setInterval(load,8000); } }
+  function showLogin(){ appEl.hidden=true; loginEl.hidden=false; closeDrawer(); if(pollTimer){ clearInterval(pollTimer); pollTimer=null; } }
+
+  document.getElementById('loginForm').addEventListener('submit', async e=>{
+    e.preventDefault();
+    const email=document.getElementById('email').value.trim();
+    const btn=document.getElementById('loginBtn'), msg=document.getElementById('loginMsg');
+    btn.disabled=true; msg.className='login-msg'; msg.textContent='Sending…';
+    const {error}=await db.auth.signInWithOtp({
+      email,
+      options:{ shouldCreateUser:false, emailRedirectTo: location.origin + location.pathname }
+    });
+    btn.disabled=false;
+    if(error){
+      msg.className='login-msg err';
+      msg.textContent = /signup|not allowed|not found|disabled/i.test(error.message)
+        ? "This email isn't allowed to sign in."
+        : "Couldn't send the link: " + error.message;
+      return;
+    }
+    msg.className='login-msg ok';
+    msg.textContent='Check your email and tap the link to sign in.';
+  });
+
+  document.getElementById('signout').addEventListener('click', async()=>{ await db.auth.signOut(); showLogin(); });
+
+  db.auth.onAuthStateChange((_evt, session)=>{ session ? showApp() : showLogin(); });
+  db.auth.getSession().then(({data})=>{ data.session ? showApp() : showLogin(); });
+</script>
+</body>
+</html>
