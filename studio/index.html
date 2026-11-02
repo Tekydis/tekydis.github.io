@@ -755,7 +755,9 @@ const F={pipe:'open',proj:'active',pros:'new'};let TASKS_OK=true,OPEN_PID=null,P
 
 /* ---------- data ---------- */
 function setConn(ok,msg){$('conn').className='hpill sync '+(ok?'ok':'err');$('connTxt').textContent=msg;}
+let LOADSEQ=0;
 async function load(force){
+  const seq=++LOADSEQ;
   try{
     const r=await Promise.all([
       db.from('agents').select('*'),db.from('projects').select('*').order('updated_at',{ascending:false}),
@@ -766,6 +768,7 @@ async function load(force){
     if(r[0].error) throw r[0].error;
     const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[])};
     TASKS_OK=!r[7].error;
+    if(seq!==LOADSEQ)return;
     lastSync=Date.now();tickSync();
     const sig=JSON.stringify(next)+'|'+Math.floor(Date.now()/60000);
     if(!force&&sig===lastSig)return;
@@ -1018,7 +1021,7 @@ function exportPdf(q){
 /* ---------- projects ---------- */
 function renderProjects(){
   const host=$('projBody');let list=S.projects,f=F.proj;
-  if(f==='archived')list=list.filter(p=>p.archived_at);else{list=list.filter(p=>!p.archived_at);
+  if(f==='archived')list=list.filter(p=>p.archived_at);else if(f==='all'){}else{list=list.filter(p=>!p.archived_at);
     if(f==='active')list=list.filter(isActive);else if(f==='draft')list=list.filter(p=>p.status==='draft');else if(f==='done')list=list.filter(p=>p.status==='done');else if(f!=='all')list=list.filter(p=>p.pipeline===f);}
   host.innerHTML='';
   if(!list.length){host.appendChild(S.projects.length?emptyBig(f==='archived'?'The archive is empty.':f==='draft'?'No drafts.':'Nothing in this filter.'):emptyBig('No projects yet. Write a brief and the CEO assigns the team.','plus','New project',()=>openProjectModal()));return;}
