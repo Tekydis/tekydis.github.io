@@ -140,6 +140,31 @@
   [data-s="waiting_on_room"] .status,[data-s="requested"] .status,[data-s="queued"] .status{color:var(--violet);border-color:rgba(180,140,242,.3)}
   [data-s="stuck"] .sl{background:var(--red)} [data-s="stuck"] .status{color:var(--red)}
   [data-s="done"] .sl{background:var(--green)} [data-s="done"] .status{color:var(--green);border-color:rgba(111,213,143,.35)}
+  [data-s="stuck"] .status,[data-s="stalled"] .status{border-color:rgba(242,118,138,.4)} [data-s="stalled"] .sl{background:var(--red)} [data-s="stalled"] .status{color:var(--red)}
+  [data-s="draft"] .status{border-style:dashed} [data-s="archived"] .status{opacity:.7}
+  .flag{display:inline-flex;align-items:center;gap:5px;font-size:.72rem;font-weight:600;color:var(--red);border:1px solid rgba(242,118,138,.4);border-radius:999px;padding:3px 9px}
+  .flag.warn{color:var(--amber);border-color:rgba(245,196,81,.4)}
+  .ptabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin:16px 0 4px;overflow-x:auto}
+  .ptab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);font:inherit;font-size:.88rem;font-weight:600;padding:10px 12px;min-height:44px;cursor:pointer;white-space:nowrap}
+  .ptab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+  .ptab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+  .task{border:1px solid var(--line);border-radius:12px;background:var(--elev);padding:11px 13px;margin-bottom:8px}
+  .task .th{display:flex;gap:8px;align-items:flex-start;justify-content:space-between}
+  .task .tt{font-weight:600;font-size:.93rem;overflow-wrap:anywhere}
+  .task .tm{font-size:.78rem;color:var(--subtle);margin-top:4px}
+  .task .why{margin-top:8px;font-size:.85rem;color:var(--fg);background:rgba(242,118,138,.08);border-left:3px solid var(--red);padding:7px 10px;border-radius:0 8px 8px 0}
+  .task .tc{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+  .task select{min-height:40px;font-size:.84rem;padding:6px 10px;width:auto;flex:1 1 120px;min-width:0}
+  .task .tc .btn.danger{flex:none;min-height:40px}
+  .agrow{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;background:var(--elev);padding:11px 13px;margin-bottom:8px}
+  .agrow .who-av{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;color:var(--accent-ink);flex:none}
+  .agrow .ab{min-width:0;flex:1} .agrow .an{font-weight:600} .agrow .as{font-size:.82rem;color:var(--muted);margin-top:3px}
+  .dz{border:1px solid rgba(242,118,138,.45);border-radius:12px;padding:13px;margin-top:10px}
+  .dz p{margin:0 0 10px;font-size:.85rem;color:var(--muted)}
+  .pacts{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .addtask{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:10px}
+  @media (max-width:560px){.addtask{grid-template-columns:1fr}}
   .bar6{height:6px;border-radius:3px;background:var(--field);overflow:hidden;flex:1;min-width:70px}
   .bar6 i{display:block;height:100%;background:linear-gradient(90deg,var(--navy-300),var(--accent));border-radius:3px;transition:width .8s var(--ease)}
   .meta{font-size:.8rem;color:var(--subtle);overflow-wrap:anywhere}
@@ -453,9 +478,9 @@
   <section id="view-quotes" role="tabpanel" aria-labelledby="tab-quotes" hidden><div id="quoteBody"></div></section>
   <section id="view-projects" role="tabpanel" aria-labelledby="tab-projects" hidden>
     <div class="chips" id="projFilters">
-      <button class="fchip" data-f="active" aria-pressed="true">Active</button><button class="fchip" data-f="delivery" aria-pressed="false">Delivery</button>
+      <button class="fchip" data-f="active" aria-pressed="true">Active</button><button class="fchip" data-f="draft" aria-pressed="false">Drafts</button><button class="fchip" data-f="delivery" aria-pressed="false">Delivery</button>
       <button class="fchip" data-f="prospecting" aria-pressed="false">Prospecting</button><button class="fchip" data-f="done" aria-pressed="false">Done</button>
-      <button class="fchip" data-f="all" aria-pressed="false">All</button>
+      <button class="fchip" data-f="archived" aria-pressed="false">Archive</button><button class="fchip" data-f="all" aria-pressed="false">All</button>
     </div>
     <div id="projBody"></div>
   </section>
@@ -512,7 +537,7 @@
     <div class="field"><span class="lbl">Files (optional)</span>
       <label class="drop" for="pfiles"><span data-ic="clip"></span><span>Attach files: briefs, logos, screenshots, spreadsheets</span><input type="file" id="pfiles" multiple></label>
       <ul class="flist" id="flist"></ul></div>
-    <div class="mfoot"><button type="button" class="btn sec" data-close data-label="Cancel"></button><button type="submit" class="btn" id="psubmit"></button></div>
+    <div class="mfoot"><button type="button" class="btn sec" data-close data-label="Cancel"></button><button type="submit" class="btn sec" id="pdraft" value="draft"></button><button type="submit" class="btn" id="psubmit" value="send"></button></div>
     <div class="formmsg" id="pMsg" role="status" aria-live="polite"></div>
   </form>
 </div>
@@ -595,6 +620,11 @@
     <div class="fgrid"><div class="field"><label class="lbl" for="sPass">New password</label><input type="password" id="sPass" autocomplete="new-password" minlength="8"></div><div class="field"><label class="lbl" for="sPass2">Repeat it</label><input type="password" id="sPass2" autocomplete="new-password" minlength="8"></div></div>
     <button class="btn sm" id="sSavePass" type="button"></button><div class="formmsg" id="sMsgPass" role="status"></div>
   </section>
+  <section class="set-sec" id="set-studio">
+    <h3 data-ic="bell">Studio</h3><p>If a task says "Working" but gets no update for this long, the portal marks it Stuck.</p>
+    <div class="fgrid"><div class="field"><label class="lbl" for="sStall">Flag as stuck after</label><select id="sStall"><option value="1">1 hour</option><option value="2">2 hours</option><option value="4">4 hours</option><option value="8">8 hours</option><option value="24">24 hours</option></select></div></div>
+    <button class="btn sm" id="sSaveStudio" type="button"></button><div class="formmsg" id="sMsgStudio" role="status"></div>
+  </section>
   <section class="set-sec">
     <h3 data-ic="shield">Sessions</h3><p>Signs you out on every phone and computer, including this one.</p>
     <button class="btn danger sm" id="sOutAll" type="button"></button>
@@ -650,7 +680,9 @@ const P={
   shieldcheck:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>',megaphone:'<path d="m3 11 18-5v12L3 14z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/>',
   handshake:'<path d="m11 17 2 2a1.4 1.4 0 0 0 2-2"/><path d="m14 14 2.5 2.5a1.4 1.4 0 0 0 2-2l-3.9-3.9a2.8 2.8 0 0 0-4 0l-.9.9a1.4 1.4 0 0 1-2-2l2.8-2.8a5 5 0 0 1 5.8-.9l.5.2a5 5 0 0 0 1.9.4H21"/><path d="M21 3v11h-2M3 3v11h2l6 6M3 4h8"/>',
   type:'<path d="M4 7V4h16v3M9 20h6M12 4v16"/>',palette:'<path d="M12 22a10 10 0 1 1 10-10c0 2.2-1.8 3-3 3h-2.3a2 2 0 0 0-1.4 3.4A2.3 2.3 0 0 1 12 22z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7" r="1"/><circle cx="16.5" cy="10.5" r="1"/>',
-  calc:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h4"/>'
+  calc:'<rect x="4" y="2" width="16" height="20" rx="2"/><path d="M8 6h8M8 10h.01M12 10h.01M16 10h.01M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h4"/>',
+  archive:'<rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8M10 12h4"/>',
+  alert:'<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'
 };
 const ic=(n,cls)=>`<svg class="ic${cls?' '+cls:''}" viewBox="0 0 24 24" aria-hidden="true">${P[n]||''}</svg>`;
 const btnHtml=(icon,label)=>`${ic(icon)}<span>${label}</span>`;
@@ -664,7 +696,8 @@ const ROLE={ceo:"CEO","product-manager":"Product Manager","ux-researcher":"UX Re
 const ROLE_IC={ceo:"crown","product-manager":"clipboard","ux-researcher":"search","senior-product-designer":"pen","ui-designer":"layout","front-end-dev":"code","back-end-dev":"server","database-engineer":"database","qa-accessibility":"shieldcheck",marketer:"megaphone","sales-bd":"handshake","content-writer":"type",prospector:"target","brand-designer":"palette",financer:"calc"};
 const LEVELS=["","Trainee","Associate","Junior","Specialist","Senior","Lead","Principal","Expert","Master","Legend"];
 const A_STATUS={idle:"Idle",working:"Working",waiting_on_you:"Waiting on you",waiting_on_room:"Waiting on a teammate",stuck:"Stuck",meeting:"In a meeting"};
-const P_STATUS={requested:"Requested",queued:"Queued",in_progress:"In progress",review:"In review",needs_you:"Needs you",done:"Done",on_hold:"On hold"};
+const T_STATUS={todo:"To do",working:"Working",review:"In review",needs_you:"Needs you",done:"Done",stuck:"Stuck"};
+const P_STATUS={draft:"Draft",requested:"Sent to studio",queued:"Queued",in_progress:"In progress",review:"In review",needs_you:"Needs you",done:"Done",on_hold:"On hold"};
 const STAGES=[{k:'lead',l:'Lead',p:.1},{k:'qualified',l:'Qualified',p:.3},{k:'proposal',l:'Proposal',p:.6},{k:'won',l:'Won',p:1},{k:'lost',l:'Lost',p:0}];
 const Q_STATUS={pending:"Pending",sent:"Sent",accepted:"Accepted",declined:"Declined"};
 const CAT_LABEL={car_rental:"Car rental",restaurant:"Restaurants",cafe:"Cafés",hotel:"Hotels",real_estate:"Real estate",clinic:"Clinics",beauty:"Beauty & spa",shop:"Shops"};
@@ -686,6 +719,17 @@ const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function toast(m,kind){const t=$('toast');t.innerHTML=ic(kind==='err'?'x':kind==='ok'?'check':'bell')+'<span>'+esc(m)+'</span>';t.className='toast'+(kind?' '+kind:'');t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,3400);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+/* projects + tasks helpers */
+const isActive=p=>!p.archived_at&&!['done','on_hold','draft'].includes(p.status);
+const stallH=()=>Number((USER&&USER.stall)||2);
+const sinceTxt=t=>{const m=Math.round((Date.now()-new Date(t))/60000);return m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d';};
+/* effective state: a Working task with no update for stallH() hours counts as stuck */
+function tState(t){if(t.status==='working'&&Date.now()-new Date(t.updated_at)>stallH()*3600e3)return 'stalled';return t.status||'todo';}
+function tLabel(t){const s=tState(t);return s==='stalled'?'Stuck · no update for '+sinceTxt(t.updated_at):T_STATUS[s]||s;}
+function blockedTasks(){const live=S.projects.filter(p=>!p.archived_at).map(p=>p.id);return S.tasks.filter(t=>live.includes(t.project_id)&&['stuck','stalled','needs_you'].includes(tState(t)));}
+const tasksOf=pid=>S.tasks.filter(t=>t.project_id===pid);
+function projFlags(p){const ts=tasksOf(p.id),st=ts.filter(t=>['stuck','stalled'].includes(tState(t))).length,ny=ts.filter(t=>t.status==='needs_you').length;
+  return (st?`<span class="flag">${ic('alert','sm')}${st} stuck</span>`:'')+(ny?`<span class="flag warn">${ic('bell','sm')}${ny} need${ny>1?'':'s'} you</span>`:'');}
 function fillIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(el=>{if(el.dataset.icDone)return;el.dataset.icDone='1';el.insertAdjacentHTML('afterbegin',ic(el.dataset.ic));});}
 
 /* static labels with icons */
@@ -694,7 +738,7 @@ function staticLabels(){
   $('nPwBtn').innerHTML=btnHtml('save','Save password');
   document.querySelectorAll('.mx').forEach(b=>b.innerHTML=ic('x'));
   document.querySelectorAll('[data-label="Cancel"]').forEach(b=>b.innerHTML=btnHtml('x','Cancel'));
-  $('send').innerHTML=btnHtml('send','Send');$('setCoords').innerHTML=btnHtml('crosshair','Set');$('psubmit').innerHTML=btnHtml('plus','Create project');
+  $('send').innerHTML=btnHtml('send','Send');$('setCoords').innerHTML=btnHtml('crosshair','Set');$('psubmit').innerHTML=btnHtml('send','Send to the studio');$('pdraft').innerHTML=btnHtml('save','Save as draft');$('sSaveStudio').innerHTML=btnHtml('save','Save');
   $('lSave').innerHTML=btnHtml('save','Save lead');$('lDelete').innerHTML=btnHtml('trash','Delete');
   $('qAddCustom').innerHTML=btnHtml('plus','Add custom item');$('qSave').innerHTML=btnHtml('save','Save as pending');$('qSavePdf').innerHTML=btnHtml('download','Save + PDF');
   document.querySelector('[data-set=profile]').innerHTML=btnHtml('sliders','Account settings');document.querySelector('[data-set=email]').innerHTML=btnHtml('mail','Change login email');
@@ -705,9 +749,9 @@ function staticLabels(){
 }
 staticLabels();
 
-let S={agents:[],projects:[],prospects:[],leads:[],quotes:[],needs:[],events:[]};
+let S={agents:[],projects:[],prospects:[],leads:[],quotes:[],needs:[],events:[],tasks:[]};
 let lastSig='',tab=lsGet('ts_tab')||'overview',lastSync=0,firstPaint=true,USER=null;
-const F={pipe:'open',proj:'active',pros:'new'};
+const F={pipe:'open',proj:'active',pros:'new'};let TASKS_OK=true,OPEN_PID=null,PTAB='overview';
 
 /* ---------- data ---------- */
 function setConn(ok,msg){$('conn').className='hpill sync '+(ok?'ok':'err');$('connTxt').textContent=msg;}
@@ -717,11 +761,13 @@ async function load(force){
       db.from('agents').select('*'),db.from('projects').select('*').order('updated_at',{ascending:false}),
       db.from('prospects').select('*').order('created_at',{ascending:false}),db.from('leads').select('*').order('updated_at',{ascending:false}),
       db.from('quotes').select('*').order('created_at',{ascending:false}),db.from('needs').select('*').eq('resolved',false).order('created_at'),
-      db.from('events').select('*').order('created_at',{ascending:false}).limit(15)]);
+      db.from('events').select('*').order('created_at',{ascending:false}).limit(15),
+      db.from('tasks').select('*').order('sort').order('created_at')]);
     if(r[0].error) throw r[0].error;
-    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[]};
+    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[])};
+    TASKS_OK=!r[7].error;
     lastSync=Date.now();tickSync();
-    const sig=JSON.stringify(next);
+    const sig=JSON.stringify(next)+'|'+Math.floor(Date.now()/60000);
     if(!force&&sig===lastSig)return;
     lastSig=sig;S=next;renderAll();firstPaint=false;
   }catch(e){console.error(e);setConn(false,'Connection lost');}
@@ -730,20 +776,20 @@ function tickSync(){if(!lastSync)return;const s=Math.round((Date.now()-lastSync)
 setInterval(tickSync,5000);
 function renderAll(){
   document.body.classList.toggle('alive',S.agents.some(a=>a.status==='working'));
-  renderCounts();renderHello();renderOverview();renderFloor();renderPipeline();renderQuotes();renderProjects();renderProspects();
+  renderCounts();renderHello();renderOverview();renderFloor();renderPipeline();renderQuotes();renderProjects();renderProspects();refreshProjectDrawer();
 }
 function renderCounts(){
   const openLeads=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost').length,qOut=S.quotes.filter(q=>q.status==='pending'||q.status==='sent').length,
-    pAct=S.projects.filter(p=>p.status!=='done'&&p.status!=='on_hold').length,pr=S.prospects.filter(x=>(x.status||'new')==='new').length;
+    pAct=S.projects.filter(isActive).length,pr=S.prospects.filter(x=>(x.status||'new')==='new').length;
   $('nPipe').textContent=openLeads||'';$('nQuotes').textContent=qOut||'';$('nProj').textContent=pAct||'';$('nPros').textContent=pr||'';
-  const n=S.needs.length;$('needsPill').hidden=!n;$('needsPill').innerHTML=ic('bell','sm')+'<b>'+n+'</b><span class="nlong"> waiting on you</span>';$('needsPill').setAttribute('aria-label',n+' waiting on you');
+  const n=S.needs.length+blockedTasks().length;$('needsPill').hidden=!n;$('needsPill').innerHTML=ic('bell','sm')+'<b>'+n+'</b><span class="nlong"> waiting on you</span>';$('needsPill').setAttribute('aria-label',n+' waiting on you');
 }
 function renderHello(){
   let h=12;try{h=Number(new Date().toLocaleString('en-GB',{timeZone:'Africa/Tunis',hour:'2-digit',hour12:false}));}catch(e){}
   const part=h<5?'Working late':h<12?'Good morning':h<18?'Good afternoon':'Good evening';
   const first=(USER&&USER.name||'Idris').split(' ')[0];
   $('greet').innerHTML=`${part}, <em>${esc(first)}</em>.`;
-  const working=S.agents.filter(a=>a.status==='working').length,needs=S.needs.length,open=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost').length,act=S.projects.filter(p=>p.status!=='done'&&p.status!=='on_hold').length;
+  const working=S.agents.filter(a=>a.status==='working').length,needs=S.needs.length+blockedTasks().length,open=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost').length,act=S.projects.filter(isActive).length;
   const bits=[];bits.push(needs?`${needs} thing${needs>1?'s':''} need${needs>1?'':'s'} you`:'Nothing needs you right now');
   bits.push(working?`${working} agent${working>1?'s':''} working`:'the team is idle');bits.push(`${act} active project${act===1?'':'s'}`);bits.push(`${open} open lead${open===1?'':'s'}`);
   $('summary').textContent=bits.join(' · ')+'.';
@@ -774,15 +820,20 @@ function countUp(el,target,prefix){if(reduce||!firstPaint){el.textContent=prefix
 function renderOverview(){
   const open=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost'),openV=open.reduce((a,l)=>a+usd(l.value,l.currency),0),stp=k=>(STAGES.find(s=>s.k===k)||STAGES[0]).p;
   const weighted=S.leads.reduce((a,l)=>a+usd(l.value,l.currency)*stp(l.stage),0),qOut=S.quotes.filter(q=>q.status==='pending'||q.status==='sent').reduce((a,q)=>a+usd(q.total,q.currency),0);
-  const qAcc=S.quotes.filter(q=>q.status==='accepted').reduce((a,q)=>a+usd(q.total,q.currency),0),act=S.projects.filter(p=>p.status!=='done'&&p.status!=='on_hold');
+  const qAcc=S.quotes.filter(q=>q.status==='accepted').reduce((a,q)=>a+usd(q.total,q.currency),0),act=S.projects.filter(isActive);
   const working=S.agents.filter(a=>a.status==='working').length,toReview=S.prospects.filter(x=>(x.status||'new')==='new').length;
   const K=[['funnel','Open pipeline',openV,'$','≈USD','pipeline',''],['target','Weighted',weighted,'$','≈USD','pipeline','hi'],['receipt','Quotes out',qOut,'$','≈USD','quotes',''],['folder','Active projects',act.length,'','','projects',''],['users','Agents working',working,'','of '+S.agents.length,'floor',''],['pin','Prospects to review',toReview,'','','prospects',toReview?'warn':'']];
   const box=$('kpis');box.innerHTML='';
   K.forEach(k=>{const b=document.createElement('button');b.className='kpi '+k[6];b.innerHTML=`<span class="go">${ic('arrow','sm')}</span><div class="l">${ic(k[0],'sm')}${k[1]}</div><div class="v tnum"><span></span><small>${k[4]}</small></div>`;
     b.onclick=()=>showTab(k[5]);countUp(b.querySelector('.v span'),k[2],k[3]);box.appendChild(b);});
-  $('needsN').textContent=S.needs.length?S.needs.length+' item'+(S.needs.length>1?'s':''):'';
+  const blk=blockedTasks();
+  const total=S.needs.length+blk.length;
+  $('needsN').textContent=total?total+' item'+(total>1?'s':''):'';
   const ul=$('needsList');ul.innerHTML='';
-  if(!S.needs.length){ul.innerHTML=`<li class="empty" style="border:0;background:none;padding:0">${ic('check')} Nothing needs you right now. The team will flag anything that does.</li>`;}
+  blk.forEach(t=>{const p=S.projects.find(x=>x.id===t.project_id)||{},li=document.createElement('li'),st=tState(t);
+    li.innerHTML=`<span class="src" style="color:${st==='needs_you'?'var(--amber)':'var(--red)'}">${st==='needs_you'?'Needs you':'Stuck'}</span><span class="txt"><b>${esc(t.title)}</b> · ${esc(p.name||'')}${t.agent?' · '+esc(agentName(t.agent)):''}${t.stuck_reason?' — '+esc(t.stuck_reason):st==='stalled'?' — no update for '+sinceTxt(t.updated_at):''}</span>`;
+    const b=document.createElement('button');b.className='btn sec sm';b.innerHTML=btnHtml('arrow','Open');b.onclick=()=>{PTAB='tasks';openProject(p);};li.appendChild(b);ul.appendChild(li);});
+  if(!total){ul.innerHTML=`<li class="empty" style="border:0;background:none;padding:0">${ic('check')} Nothing needs you right now. The team will flag anything that does.</li>`;}
   else S.needs.forEach(nd=>{const li=document.createElement('li');li.innerHTML=`<span class="src">${esc(nd.source)}</span><span class="txt">${esc(nd.body)}</span>`;
     const b=document.createElement('button');b.className='btn sm';b.innerHTML=btnHtml('check','Mark done');b.onclick=async()=>{b.disabled=true;await db.from('needs').update({resolved:true}).eq('id',nd.id);toast('Marked done','ok');load(true);};li.appendChild(b);ul.appendChild(li);});
   let max=1;const vals=STAGES.map(st=>{const ls=S.leads.filter(l=>l.stage===st.k),v=ls.reduce((a,l)=>a+usd(l.value,l.currency),0);if(v>max)max=v;return{st,n:ls.length,v};});
@@ -966,16 +1017,17 @@ function exportPdf(q){
 
 /* ---------- projects ---------- */
 function renderProjects(){
-  const host=$('projBody');let list=S.projects;
-  if(F.proj==='active')list=list.filter(p=>p.status!=='done'&&p.status!=='on_hold');else if(F.proj==='done')list=list.filter(p=>p.status==='done');else if(F.proj!=='all')list=list.filter(p=>p.pipeline===F.proj);
+  const host=$('projBody');let list=S.projects,f=F.proj;
+  if(f==='archived')list=list.filter(p=>p.archived_at);else{list=list.filter(p=>!p.archived_at);
+    if(f==='active')list=list.filter(isActive);else if(f==='draft')list=list.filter(p=>p.status==='draft');else if(f==='done')list=list.filter(p=>p.status==='done');else if(f!=='all')list=list.filter(p=>p.pipeline===f);}
   host.innerHTML='';
-  if(!list.length){host.appendChild(S.projects.length?emptyBig('Nothing in this filter.'):emptyBig('No projects yet. Write a brief and the CEO assigns the team.','plus','New project',()=>openProjectModal()));return;}
-  list.forEach(p=>{const b=document.createElement('button');b.className='item';b.dataset.s=p.status||'requested';const pros=p.pipeline==='prospecting';
+  if(!list.length){host.appendChild(S.projects.length?emptyBig(f==='archived'?'The archive is empty.':f==='draft'?'No drafts.':'Nothing in this filter.'):emptyBig('No projects yet. Write a brief and the CEO assigns the team.','plus','New project',()=>openProjectModal()));return;}
+  list.forEach(p=>{const b=document.createElement('button');b.className='item';const ds=p.archived_at?'archived':(p.status||'requested');b.dataset.s=ds;const pros=p.pipeline==='prospecting',ts=tasksOf(p.id),dn=ts.filter(t=>t.status==='done').length;
     b.innerHTML=`<div class="ih"><span class="nm">${esc(p.name)}</span><span class="chip ${pros?'t2':'t1'}">${ic(pros?'pin':'hammer','sm')}${pros?'Prospecting':'Delivery'}</span></div>
       ${p.client||p.value?`<div class="meta">${esc(p.client||'')}${p.client&&p.value?' · ':''}${p.value?fmt(p.value)+' '+esc(p.currency||''):''}${p.due?' · due '+esc(p.due):''}</div>`:''}
       ${p.brief?`<p class="brief">${esc(p.brief)}</p>`:''}
-      <div class="ib2"><span class="status"><span class="sl"></span>${P_STATUS[p.status]||esc(p.status)}</span><span class="bar6"><i style="width:${Math.max(2,Math.min(100,p.progress||0))}%"></i></span><span class="meta">${p.progress||0}%</span>${ic('chev','sm')}</div>`;
-    b.onclick=()=>openProject(p);host.appendChild(b);});
+      <div class="ib2"><span class="status"><span class="sl"></span>${p.archived_at?'Archived':P_STATUS[p.status]||esc(p.status)}</span>${projFlags(p)}<span class="bar6"><i style="width:${Math.max(2,Math.min(100,p.progress||0))}%"></i></span><span class="meta">${ts.length?dn+'/'+ts.length+' tasks · ':''}${p.progress||0}%</span>${ic('chev','sm')}</div>`;
+    b.onclick=()=>{PTAB='overview';openProject(p);};host.appendChild(b);});
 }
 
 /* ---------- prospects ---------- */
@@ -1002,8 +1054,8 @@ async function setProspect(x,st,btn){btn.disabled=true;
 
 /* ---------- drawer ---------- */
 const scrim=$('scrim'),drawer=$('drawer');
-function openDrawer(html){closeMenu();drawer.innerHTML=`<button class="mx" aria-label="Close">${ic('x')}</button>`+html;drawer.querySelector('.mx').onclick=closeDrawer;drawer.classList.add('open');scrim.classList.add('open');drawer.setAttribute('aria-hidden','false');setTimeout(()=>drawer.querySelector('.mx').focus(),50);}
-function closeDrawer(){drawer.classList.remove('open');scrim.classList.remove('open');drawer.setAttribute('aria-hidden','true');}
+function openDrawer(html){OPEN_PID=null;closeMenu();drawer.innerHTML=`<button class="mx" aria-label="Close">${ic('x')}</button>`+html;drawer.querySelector('.mx').onclick=closeDrawer;drawer.classList.add('open');scrim.classList.add('open');drawer.setAttribute('aria-hidden','false');setTimeout(()=>drawer.querySelector('.mx').focus(),50);}
+function closeDrawer(){OPEN_PID=null;drawer.classList.remove('open');scrim.classList.remove('open');drawer.setAttribute('aria-hidden','true');}
 scrim.addEventListener('click',closeDrawer);
 function openAgent(a){
   const ladder=LEVELS.map((n,i)=>i?`<div class="lv ${i===(a.level||1)?'cur':''}"><b>L${i}</b>${n}</div>`:'').join('');
@@ -1017,28 +1069,108 @@ function openAgent(a){
     <div class="d-sec">Lessons learned</div><div class="d-note">Lessons and weekly growth cards appear here once agents are connected to the studio.</div>
     <div class="d-sec">Level ladder</div><div class="d-ladder">${ladder}</div>`);
 }
+/* ---------- project page ---------- */
+let PEV=[];
+const curP=()=>S.projects.find(x=>x.id===OPEN_PID);
+const agentOpts=sel=>`<option value="">Unassigned</option>`+S.agents.slice().sort((a,b)=>roleOf(a).localeCompare(roleOf(b))).map(a=>`<option value="${esc(a.slug)}"${a.slug===sel?' selected':''}>${esc(roleOf(a))} · ${esc(nameOf(a))}</option>`).join('');
 async function openProject(p){
-  const pros=p.pipeline==='prospecting',loc=p.location_lat!=null?`${Number(p.location_lat).toFixed(4)}, ${Number(p.location_lng).toFixed(4)} · ${p.radius_km||'?'} km`:'—',nP=S.prospects.filter(x=>x.project_id===p.id).length;
-  openDrawer(`<div class="d-av" style="background:${pros?'#6FC9E8':'#B48CF2'}">${ic(pros?'pin':'folder')}</div>
+  PEV=[];
+  openDrawer(`<div id="pHead"></div><div class="ptabs" role="tablist" aria-label="Project sections">
+    ${[['overview','Overview'],['tasks','Tasks'],['agents','Agents'],['timeline','Timeline']].map(([k,l])=>`<button class="ptab" role="tab" data-pt="${k}" aria-selected="${PTAB===k}">${l}</button>`).join('')}</div><div id="pPanel"></div>`);
+  drawer.querySelectorAll('.ptab').forEach(b=>b.onclick=()=>{PTAB=b.dataset.pt;drawer.querySelectorAll('.ptab').forEach(x=>x.setAttribute('aria-selected',String(x===b)));renderPPanel();});
+  OPEN_PID=p.id;renderPHead();renderPPanel();loadPEV();
+}
+async function loadPEV(){const pid=OPEN_PID;const {data}=await db.from('events').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(100);if(pid!==OPEN_PID)return;PEV=data||[];if(PTAB==='timeline'||PTAB==='agents')renderPPanel();}
+function refreshProjectDrawer(){if(!OPEN_PID||!drawer.classList.contains('open'))return;if(!curP()){closeDrawer();return;}
+  const a=document.activeElement;if(a&&drawer.contains(a)&&/INPUT|TEXTAREA|SELECT/.test(a.tagName))return;renderPHead();renderPPanel();loadPEV();}
+function renderPHead(){const p=curP();if(!p)return;const pros=p.pipeline==='prospecting',ds=p.archived_at?'archived':p.status;
+  $('pHead').innerHTML=`<div class="d-av" style="background:${pros?'#6FC9E8':'#B48CF2'}">${ic(pros?'pin':'folder')}</div>
     <div class="d-role">${esc(p.name)}</div>
-    <div class="d-rl" data-s="${esc(p.status)}"><span class="status"><span class="sl"></span>${P_STATUS[p.status]||esc(p.status)}</span><span class="chip">${pros?'Prospecting':'Delivery'}</span><span class="chip">${p.progress||0}%</span></div>
-    <div class="d-sec">Brief</div><div class="d-note">${esc(p.brief||'—')}</div>
+    <div class="d-rl" data-s="${esc(ds)}"><span class="status"><span class="sl"></span>${p.archived_at?'Archived':P_STATUS[p.status]||esc(p.status)}</span><span class="chip">${pros?'Prospecting':'Delivery'}</span><span class="chip">${p.progress||0}%</span>${projFlags(p)}</div>
+    <div class="pacts" id="pActs"></div>`;
+  const acts=$('pActs'),mk=(cls,icn,l,fn)=>{const b=document.createElement('button');b.className='btn sm '+cls;b.innerHTML=btnHtml(icn,l);b.onclick=()=>fn(b);acts.appendChild(b);};
+  if(p.archived_at){mk('','undo','Restore',b=>projPatch(p,{archived_at:null},'Restored from archive',b));}
+  else{
+    if(p.status==='draft')mk('','send','Send to the studio',b=>projPatch(p,{status:'requested',sent_at:new Date().toISOString()},'Sent to the studio',b));
+    else mk('sec','edit','Move back to draft',b=>projPatch(p,{status:'draft'},'Moved back to draft',b));
+    mk('sec','archive','Archive',b=>projPatch(p,{archived_at:new Date().toISOString()},'Archived',b));}
+}
+async function projPatch(p,row,msg,btn){if(btn)btn.disabled=true;row.updated_at=new Date().toISOString();
+  const {error}=await db.from('projects').update(row).eq('id',p.id);if(btn)btn.disabled=false;
+  if(error){toast("Couldn't update: "+error.message,'err');return;}await logEvent('project_update',msg+': '+p.name,p.id);toast(msg,'ok');load(true);}
+function renderPPanel(){const p=curP(),box=$('pPanel');if(!p||!box)return;
+  if(PTAB==='tasks')return renderPTasks(p,box);if(PTAB==='agents')return renderPAgents(p,box);if(PTAB==='timeline')return renderPTimeline(p,box);
+  const pros=p.pipeline==='prospecting',loc=p.location_lat!=null?`${Number(p.location_lat).toFixed(4)}, ${Number(p.location_lng).toFixed(4)} · ${p.radius_km||'?'} km`:'—',nP=S.prospects.filter(x=>x.project_id===p.id).length;
+  const ts=tasksOf(p.id),dn=ts.filter(t=>t.status==='done').length,wk=ts.filter(t=>tState(t)==='working').length,bl=ts.filter(t=>['stuck','stalled','needs_you'].includes(tState(t))).length;
+  const stOpts=Object.keys(P_STATUS).filter(k=>k!=='draft').map(k=>`<option value="${k}"${k===p.status?' selected':''}>${P_STATUS[k]}</option>`).join('');
+  box.innerHTML=`<div class="d-sec">Brief</div><div class="d-note">${esc(p.brief||'—')}</div>
+    <div class="d-grid"><div class="d-box"><div class="k">Progress</div><div class="v">${p.progress||0}% · ${dn}/${ts.length} tasks</div></div><div class="d-box"><div class="k">Right now</div><div class="v">${ts.length?`${wk} working · ${bl} blocked`:'No tasks yet'}</div></div></div>
+    <p class="d-note" style="font-size:.8rem;color:var(--subtle)">Progress is calculated from finished tasks, so it can't be typed in.</p>
     ${pros?`<div class="d-grid"><div class="d-box"><div class="k">Area</div><div class="v">${esc(loc)}</div></div><div class="d-box"><div class="k">Prospects found</div><div class="v">${nP}</div></div></div><div class="d-sec">Categories</div><div class="d-note">${esc((p.categories||[]).map(c=>CAT_LABEL[c]||c).join(', ')||'—')}</div>`:''}
     ${p.client||p.value?`<div class="d-grid"><div class="d-box"><div class="k">Client</div><div class="v">${esc(p.client||'—')}</div></div><div class="d-box"><div class="k">Value</div><div class="v">${p.value?fmt(p.value)+' '+esc(p.currency||''):'—'}</div></div></div>`:''}
-    <div class="d-sec">Update</div>
-    <div class="fgrid"><div class="field"><label class="lbl" for="dStatus">Status</label><select id="dStatus">${Object.keys(P_STATUS).map(k=>`<option value="${k}"${k===p.status?' selected':''}>${P_STATUS[k]}</option>`).join('')}</select></div>
-      <div class="field"><label class="lbl" for="dProg">Progress %</label><input type="number" id="dProg" min="0" max="100" value="${p.progress||0}"></div>
-      <div class="field"><label class="lbl" for="dDue">Due</label><input type="date" id="dDue" value="${esc(p.due||'')}"></div>
-      <div class="field" style="display:flex;align-items:flex-end"><button class="btn" id="dSave" style="width:100%">${btnHtml('save','Save')}</button></div></div>
+    ${p.status==='draft'||p.archived_at?'':`<div class="d-sec">Update</div>
+    <div class="fgrid"><div class="field"><label class="lbl" for="dStatus">Status</label><select id="dStatus">${stOpts}</select></div>
+      <div class="field"><label class="lbl" for="dDue">Due</label><input type="date" id="dDue" value="${esc(p.due||'')}"></div></div>
+    <button class="btn sm" id="dSave">${btnHtml('save','Save')}</button>`}
     <div class="d-sec">Files</div><div id="dFiles" class="d-note">Loading…</div>
-    <div class="d-sec">Timeline</div><ul class="tl" id="dTl"><li>Loading…</li></ul>`);
-  $('dSave').onclick=async()=>{const row={status:$('dStatus').value,progress:Math.max(0,Math.min(100,Number($('dProg').value)||0)),due:$('dDue').value||null,updated_at:new Date().toISOString()};
+    ${p.archived_at?`<div class="d-sec" style="color:var(--red)">Danger zone</div><div class="dz"><p>Permanently deletes <b>${esc(p.name)}</b>, its tasks, files, timeline and prospects. This can't be undone. Type the project name to confirm.</p>
+      <div class="field"><label class="lbl" for="dzName">Project name</label><input type="text" id="dzName" autocomplete="off" spellcheck="false"></div>
+      <button class="btn danger sm" id="dzBtn" disabled>${btnHtml('trash','Delete this project permanently')}</button><div class="formmsg" id="dzMsg" role="status"></div></div>`:''}`;
+  if($('dSave'))$('dSave').onclick=async()=>{const row={status:$('dStatus').value,due:$('dDue').value||null,updated_at:new Date().toISOString()};
     const {error}=await db.from('projects').update(row).eq('id',p.id);if(error){toast("Couldn't save: "+error.message,'err');return;}
-    await logEvent('project_update',`Updated: ${P_STATUS[row.status]} · ${row.progress}%`,p.id);toast('Project updated','ok');closeDrawer();load(true);};
-  const [f,e]=await Promise.all([db.from('project_files').select('*').eq('project_id',p.id).order('created_at'),db.from('events').select('*').eq('project_id',p.id).order('created_at',{ascending:false}).limit(50)]);
-  const fl=$('dFiles');if(fl){if(f.error||!(f.data||[]).length)fl.textContent='No files.';else{fl.innerHTML='';for(const file of f.data){const {data}=await db.storage.from(BUCKET).createSignedUrl(file.path,3600);const a=document.createElement('a');a.innerHTML=ic('clip','sm')+' '+esc(file.name);a.target='_blank';a.rel='noopener';a.style.cssText='display:inline-flex;gap:6px;align-items:center;padding:4px 0';if(data&&data.signedUrl)a.href=data.signedUrl;const dv=document.createElement('div');dv.appendChild(a);fl.appendChild(dv);}}}
-  const tl=$('dTl');if(tl)tl.innerHTML=(e.data||[]).length?e.data.map(ev=>`<li><time>${esc(fmtTime(ev.created_at))} · ${esc(agentName(ev.agent))}</time>${esc(ev.body)}</li>`).join(''):'<li>No activity yet. The CEO picks this up on the next check.</li>';
+    await logEvent('project_update',`Status: ${P_STATUS[row.status]}`,p.id);toast('Project updated','ok');load(true);};
+  if($('dzName')){const inp=$('dzName'),btn=$('dzBtn');inp.oninput=()=>{btn.disabled=inp.value!==p.name;};btn.onclick=()=>deleteProject(p,inp.value,btn);}
+  loadFiles(p);
 }
+async function loadFiles(p){const {data,error}=await db.from('project_files').select('*').eq('project_id',p.id).order('created_at');const fl=$('dFiles');if(!fl)return;
+  if(error||!(data||[]).length){fl.textContent='No files.';return;}fl.innerHTML='';
+  for(const file of data){const r=await db.storage.from(BUCKET).createSignedUrl(file.path,3600);const a=document.createElement('a');a.innerHTML=ic('clip','sm')+' '+esc(file.name);a.target='_blank';a.rel='noopener';a.style.cssText='display:inline-flex;gap:6px;align-items:center;padding:4px 0';if(r.data&&r.data.signedUrl)a.href=r.data.signedUrl;const dv=document.createElement('div');dv.appendChild(a);if($('dFiles')===fl)fl.appendChild(dv);}}
+async function deleteProject(p,typed,btn){const m=$('dzMsg');btn.disabled=true;m.className='formmsg';m.textContent='Deleting…';
+  const f=await db.from('project_files').select('path').eq('project_id',p.id);const paths=(f.data||[]).map(x=>x.path);
+  const {error}=await db.rpc('delete_project',{pid:p.id,confirm_name:typed});
+  if(error){btn.disabled=false;m.className='formmsg err';m.textContent="Couldn't delete: "+error.message;return;}
+  let note='';if(paths.length){const rm=await db.storage.from(BUCKET).remove(paths);if(rm.error)note=' (some stored files could not be removed: '+rm.error.message+')';}
+  OPEN_PID=null;closeDrawer();toast('Deleted '+p.name+note,note?'err':'ok');load(true);}
+function renderPTasks(p,box){
+  if(!TASKS_OK){box.innerHTML=`<div class="d-note" style="margin-top:14px">Tasks need the new database update (build5.sql). Run it in Supabase, then refresh.</div>`;return;}
+  const ts=tasksOf(p.id);
+  box.innerHTML=`<p class="d-note" style="margin-top:14px;font-size:.84rem">Agents add and update these once they're connected to the studio. You can add or move tasks yourself too.</p><div id="tList"></div>
+    ${p.archived_at?'':`<div class="d-sec">Add a task</div><form class="addtask" id="tAdd"><input type="text" id="tTitle" placeholder="e.g. Booking flow wireframes" aria-label="Task title" required><select id="tAgent" aria-label="Assign to">${agentOpts('')}</select><button class="btn sm" type="submit">${btnHtml('plus','Add')}</button></form>`}`;
+  const list=$('tList');
+  if(!ts.length)list.innerHTML=`<p class="d-note">No tasks yet.${p.status==='draft'?' This is a draft, so the studio won\'t start it until you send it.':' The CEO breaks the brief into tasks when it picks the project up.'}</p>`;
+  ts.forEach(t=>{const st=tState(t),d=document.createElement('div');d.className='task';d.dataset.s=st;
+    d.innerHTML=`<div class="th"><div style="min-width:0"><div class="tt">${esc(t.title)}</div><div class="tm">${t.agent?esc(agentName(t.agent)):'Unassigned'} · updated ${esc(fmtTime(t.updated_at))}${t.output_url?` · <a href="${esc(t.output_url)}" target="_blank" rel="noopener">output ${ic('ext','sm')}</a>`:''}</div></div><span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div>
+      ${t.stuck_reason?`<div class="why"><b>${t.status==='needs_you'?'Needs from you':'Why it\'s stuck'}:</b> ${esc(t.stuck_reason)}</div>`:st==='stalled'?`<div class="why"><b>No update since ${esc(fmtTime(t.updated_at))}.</b> The agent stopped reporting. It may have crashed, your Mac may be asleep, or credits ran out.</div>`:''}
+      ${p.archived_at?'':`<div class="tc"><label class="sr" for="ts${t.id}">Status</label><select id="ts${t.id}">${Object.keys(T_STATUS).map(k=>`<option value="${k}"${k===t.status?' selected':''}>${T_STATUS[k]}</option>`).join('')}</select>
+        <select aria-label="Assigned agent" data-ag>${agentOpts(t.agent)}</select><button class="btn danger sm" data-del aria-label="Delete task ${esc(t.title)}">${ic('trash')}</button></div>
+      <div class="tc" data-why hidden><input type="text" placeholder="What's blocking it / what's needed?" aria-label="Reason" style="flex:1;min-width:180px"><button class="btn sm" data-ok>${btnHtml('check','Save')}</button></div>`}`;
+    if(!p.archived_at){const sel=d.querySelector('#ts'+t.id),why=d.querySelector('[data-why]');
+      sel.onchange=()=>{if(['stuck','needs_you'].includes(sel.value)){why.hidden=false;why.querySelector('input').focus();}else{why.hidden=true;taskPatch(t,{status:sel.value},`${t.title} → ${T_STATUS[sel.value]}`);}};
+      why.querySelector('[data-ok]').onclick=()=>{const r=why.querySelector('input').value.trim();if(!r){why.querySelector('input').focus();return;}taskPatch(t,{status:sel.value,stuck_reason:r},`${t.title} → ${T_STATUS[sel.value]}: ${r}`);};
+      d.querySelector('[data-ag]').onchange=e=>taskPatch(t,{agent:e.target.value||null},`${t.title} assigned to ${e.target.value?agentName(e.target.value):'nobody'}`);
+      const del=d.querySelector('[data-del]');del.onclick=async()=>{if(!del.dataset.c){del.dataset.c='1';del.innerHTML=btnHtml('trash','Tap again');setTimeout(()=>{if(del.isConnected){del.dataset.c='';del.innerHTML=ic('trash');}},3000);return;}
+        const {error}=await db.from('tasks').delete().eq('id',t.id);if(error){toast("Couldn't delete: "+error.message,'err');return;}await logEvent('task_deleted','Task removed: '+t.title,p.id);load(true);};}
+    list.appendChild(d);});
+  const f=$('tAdd');if(f)f.onsubmit=async e=>{e.preventDefault();const title=$('tTitle').value.trim();if(!title)return;const agent=$('tAgent').value||null;
+    const {error}=await db.from('tasks').insert({project_id:p.id,title,agent,sort:ts.length});if(error){toast("Couldn't add: "+error.message,'err');return;}
+    await logEvent('task_added','Task added: '+title+(agent?' → '+agentName(agent):''),p.id);$('tTitle').value='';$('tTitle').blur();toast('Task added','ok');load(true);};
+}
+async function taskPatch(t,row,msg){const {error}=await db.from('tasks').update(row).eq('id',t.id);if(error){toast("Couldn't update: "+error.message,'err');return;}
+  await logEvent('task_update',msg,t.project_id);if(document.activeElement)document.activeElement.blur();toast('Task updated','ok');load(true);}
+function renderPAgents(p,box){const ts=tasksOf(p.id),slugs=[...new Set(ts.map(t=>t.agent).concat(PEV.map(e=>e.agent)).filter(x=>x&&x!=='founder'&&x!=='studio'))];
+  if(!slugs.length){box.innerHTML=`<p class="d-note" style="margin-top:14px">No agent has touched this project yet. When the CEO assigns work, each agent appears here with what it's doing and what it finished.</p>`;return;}
+  box.innerHTML='<div style="margin-top:14px"></div>';
+  slugs.forEach(sl=>{const a=S.agents.find(x=>x.slug===sl)||{slug:sl,name:sl,pod:''},mine=ts.filter(t=>t.agent===sl),ev=PEV.filter(e=>e.agent===sl);
+    const now=mine.filter(t=>['working','stalled'].includes(tState(t))),dn=mine.filter(t=>t.status==='done'),bl=mine.filter(t=>['stuck','stalled','needs_you'].includes(tState(t)));
+    const st=bl.length?'stuck':now.length?'working':'idle',last=[mine.map(t=>t.updated_at),ev.map(e=>e.created_at)].flat().sort().pop();
+    const d=document.createElement('div');d.className='agrow';d.dataset.s=st;
+    d.innerHTML=`<span class="who-av" style="background:${AV_COLOR[a.pod]||'#9ab'}">${ic(ROLE_IC[sl]||'user')}</span><div class="ab"><div class="an">${esc(roleOf(a))} <span style="color:var(--muted);font-weight:400">· ${esc(nameOf(a))}</span></div>
+      <div class="as">${now.length?'Now: '+now.map(t=>esc(t.title)).join(', '):'Not working on anything here right now'}</div>
+      <div class="as">${dn.length} done · ${mine.length-dn.length} open${bl.length?` · <span style="color:var(--red)">${bl.length} blocked</span>`:''}${last?' · last activity '+esc(fmtTime(last)):''}</div>
+      ${ev.length?`<ul class="tl" style="margin-top:10px">${ev.slice(0,5).map(e=>`<li><time>${esc(fmtTime(e.created_at))}</time>${esc(e.body)}</li>`).join('')}</ul>`:''}</div><span class="status"><span class="sl"></span>${bl.length?'Blocked':now.length?'Working':'Idle'}</span>`;
+    box.appendChild(d);});
+}
+function renderPTimeline(p,box){box.innerHTML=`<ul class="tl" style="margin-top:16px">${PEV.length?PEV.map(ev=>`<li><time>${esc(fmtTime(ev.created_at))} · ${esc(agentName(ev.agent))}</time>${esc(ev.body)}</li>`).join(''):`<li>${p.status==='draft'?'Draft. Nothing happens until you send it to the studio.':'No activity yet. The CEO picks this up on the next check.'}</li>`}</ul>`;}
 
 /* ---------- modals ---------- */
 const mscrim=$('mscrim');let lastFocus=null;
@@ -1062,21 +1194,22 @@ function setCenter(c){center=c;if(marker){marker.setLatLng(c);circle.setLatLng(c
 $('setCoords').onclick=()=>{const m=$('coords').value.match(/(-?\d+(?:\.\d+)?)\s*[, ]\s*(-?\d+(?:\.\d+)?)/);if(!m){$('pMsg').className='formmsg err';$('pMsg').textContent='Paste coordinates like 36.4232, 10.6752';return;}const c=[parseFloat(m[1]),parseFloat(m[2])];setCenter(c);if(map)map.setView(c,12);$('pMsg').textContent='';};
 $('radius').oninput=()=>{$('radOut').textContent=radiusKm()+' km';if(circle){circle.setRadius(radiusKm()*1000);map.fitBounds(circle.getBounds(),{padding:[10,10]});}};
 $('pfiles').onchange=()=>{$('flist').innerHTML=[...$('pfiles').files].map(f=>`<li>${ic('clip','sm')}${esc(f.name)} · ${Math.max(1,Math.round(f.size/1024))} KB</li>`).join('');};
-$('pform').addEventListener('submit',async e=>{e.preventDefault();const msg=$('pMsg'),btn=$('psubmit');msg.className='formmsg';
+$('pdraft').addEventListener('click',()=>$('pform').dataset.draft='1');$('psubmit').addEventListener('click',()=>$('pform').dataset.draft='0');
+$('pform').addEventListener('submit',async e=>{e.preventDefault();const asDraft=e.submitter?e.submitter.id==='pdraft':$('pform').dataset.draft==='1',msg=$('pMsg'),btn=asDraft?$('pdraft'):$('psubmit');msg.className='formmsg';
   const name=$('pname').value.trim(),brief=$('pbrief').value.trim(),type=ptype();if(!name||!brief){msg.className='formmsg err';msg.textContent='Add a name and a brief.';return;}
   const cats=[...document.querySelectorAll('#cats input:checked')].map(i=>i.value);if(type==='prospecting'&&!cats.length){msg.className='formmsg err';msg.textContent='Pick at least one category.';return;}
   const files=[...$('pfiles').files];if(files.some(f=>f.size>50*1024*1024)){msg.className='formmsg err';msg.textContent='Each file must be under 50 MB.';return;}
   btn.disabled=true;msg.textContent='Creating project…';
-  const row={name,brief,pipeline:type,status:'requested',progress:0,updated_at:new Date().toISOString()};
+  const now=new Date().toISOString(),row={name,brief,pipeline:type,status:asDraft?'draft':'requested',progress:0,updated_at:now};if(!asDraft)row.sent_at=now;
   if(type==='prospecting')Object.assign(row,{location_lat:center[0],location_lng:center[1],radius_km:radiusKm(),categories:cats});
   else{const cl=$('pclient').value.trim(),sv=$('pservice').value.trim(),v=Number($('pvalue').value)||0;if(cl)row.client=cl;if(sv)row.service=sv;if(v){row.value=v;row.currency=$('pcur').value;}if($('pdue').value)row.due=$('pdue').value;if(cl||v)row.tier=Number($('ptier').value);}
   const {data,error}=await db.from('projects').insert(row).select().single();
   if(error){btn.disabled=false;msg.className='formmsg err';msg.textContent="Couldn't create the project: "+error.message;return;}
   let failed=0;for(let i=0;i<files.length;i++){const f=files[i];msg.textContent=`Uploading file ${i+1} of ${files.length}…`;const path=`${data.id}/${Date.now()}-${f.name.replace(/[^\w.\-]+/g,'_')}`;
     const up=await db.storage.from(BUCKET).upload(path,f,{upsert:false,contentType:f.type||undefined});if(up.error){failed++;continue;}await db.from('project_files').insert({project_id:data.id,name:f.name,path,size:f.size,mime:f.type||null});}
-  await logEvent('project_created','Project created: '+name,data.id);
+  await logEvent('project_created',(asDraft?'Draft saved: ':'Project sent to the studio: ')+name,data.id);
   btn.disabled=false;$('pform').reset();$('flist').innerHTML='';$('radOut').textContent='5 km';if(circle)circle.setRadius(5000);
-  closeModals();showTab('projects');toast(failed?`Project created, but ${failed} file(s) failed to upload`:'Project created. The CEO picks it up on the next check.',failed?'err':'ok');load(true);});
+  closeModals();showTab('projects');toast(failed?`Project saved, but ${failed} file(s) failed to upload`:asDraft?'Draft saved. Send it to the studio when it\'s ready.':'Sent to the studio. The CEO picks it up on the next check.',failed?'err':'ok');load(true);});
 
 /* ---------- user menu + settings ---------- */
 function closeMenu(focusBtn){$('umenu').hidden=true;$('ubtn').setAttribute('aria-expanded','false');if(focusBtn)$('ubtn').focus();}
@@ -1086,12 +1219,12 @@ $('umenu').addEventListener('keydown',e=>{const items=[...$('umenu').querySelect
   if(e.key==='ArrowDown'){e.preventDefault();items[(i+1)%items.length].focus();}if(e.key==='ArrowUp'){e.preventDefault();items[(i-1+items.length)%items.length].focus();}});
 document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{closeMenu();openSettings(b.dataset.set);}));
 function applyUser(u){
-  const md=(u&&u.user_metadata)||{};USER={email:u&&u.email||'',name:md.full_name||'Idris Hedhibi',title:md.title||'Founder'};
+  const md=(u&&u.user_metadata)||{};USER={email:u&&u.email||'',name:md.full_name||'Idris Hedhibi',title:md.title||'Founder',stall:md.stall_hours||2};
   $('uName').textContent=USER.name;$('uTitle').textContent=USER.title;$('uav').textContent=initials(USER.name);$('mName').textContent=USER.name;$('mEmail').textContent=USER.email;
   $('ubtn').setAttribute('aria-label',`${USER.name}, ${USER.title}. Account menu`);
 }
 function openSettings(section){
-  $('sName').value=USER.name;$('sTitle').value=USER.title;$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
+  $('sName').value=USER.name;$('sTitle').value=USER.title;$('sStall').value=String(USER.stall||2);$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
   $('sEmail').value='';$('sPass').value='';$('sPass2').value='';['sMsgProfile','sMsgEmail','sMsgPass'].forEach(id=>{$(id).textContent='';$(id).className='formmsg';});
   openModal('sModal',section==='email'?'sEmail':section==='password'?'sPass':'sName');
   const sec=$('set-'+(section||'profile'));if(sec)setTimeout(()=>sec.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'}),80);
@@ -1104,6 +1237,7 @@ $('sSaveEmail').onclick=async()=>{const email=$('sEmail').value.trim();if(!email
   sMsg('sMsgEmail','Check '+email+' (and your current inbox) for a confirmation link. Your login stays the same until you confirm.','ok');};
 $('sSavePass').onclick=async()=>{const a=$('sPass').value,b=$('sPass2').value;if(a.length<8)return sMsg('sMsgPass','Use at least 8 characters.','err');if(a!==b)return sMsg('sMsgPass',"The two passwords don't match.",'err');
   const {error}=await db.auth.updateUser({password:a});if(error)return sMsg('sMsgPass',"Couldn't update: "+error.message,'err');$('sPass').value='';$('sPass2').value='';sMsg('sMsgPass','Password updated.','ok');};
+$('sSaveStudio').onclick=async()=>{const h=Number($('sStall').value)||2;const {data,error}=await db.auth.updateUser({data:{stall_hours:h}});if(error)return sMsg('sMsgStudio',"Couldn't save: "+error.message,'err');applyUser(data.user);renderAll();sMsg('sMsgStudio','Saved. Tasks are flagged after '+h+' hour'+(h>1?'s':'')+' without an update.','ok');};
 $('sOutAll').onclick=async()=>{const b=$('sOutAll');if(!b.dataset.c){b.dataset.c='1';b.innerHTML=btnHtml('logout','Tap again to sign out everywhere');setTimeout(()=>{b.dataset.c='';b.innerHTML=btnHtml('logout','Sign out everywhere');},3000);return;}
   await db.auth.signOut({scope:'global'});closeModals();showLogin();};
 
