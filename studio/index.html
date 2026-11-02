@@ -589,9 +589,9 @@
   </div>
   <div class="qsum">
     <div class="qline"><span class="k">Subtotal</span><span class="v" id="qSub">—</span></div>
-    <div class="qline"><span class="k" id="qDepL">Deposit</span><span class="v" id="qDep">—</span></div>
     <div class="qline"><span class="k" id="qVatL">VAT</span><span class="v" id="qVat">—</span></div>
     <div class="qbig tnum" id="qBig">—</div>
+    <div class="qline"><span class="k" id="qDepL">Deposit</span><span class="v" id="qDep">—</span></div>
   </div>
   <div class="fgrid" style="margin-top:16px">
     <div class="field"><label class="lbl" for="qCompany">Company</label><input type="text" id="qCompany"></div>
@@ -701,7 +701,9 @@ const P_STATUS={draft:"Draft",requested:"Sent to studio",queued:"Queued",in_prog
 const STAGES=[{k:'lead',l:'Lead',p:.1},{k:'qualified',l:'Qualified',p:.3},{k:'proposal',l:'Proposal',p:.6},{k:'won',l:'Won',p:1},{k:'lost',l:'Lost',p:0}];
 const Q_STATUS={pending:"Pending",sent:"Sent",accepted:"Accepted",declined:"Declined"};
 const CAT_LABEL={car_rental:"Car rental",restaurant:"Restaurants",cafe:"Cafés",hotel:"Hotels",real_estate:"Real estate",clinic:"Clinics",beauty:"Beauty & spa",shop:"Shops"};
-const FX={QAR:0.2747,SAR:0.2666,TND:0.3195,USD:1};
+const FX={QAR:0.2747,SAR:0.2666,AED:0.2723,TND:0.3195,USD:1};
+/* Gulf price book is in QAR; SAR and AED are pegged to USD like QAR, so fixed rates are safe */
+const MKT_CUR={qatar:['QAR',1],saudi:['SAR',3.75/3.64],uae:['AED',3.6725/3.64],tunisia:['TND',1]};
 const QSVCS=[{k:'sprint',n:'Product Design Sprint',gulf:[7000,23000],tun:[4000,12000]},{k:'system',n:'Design System Build',gulf:[20000,60000],tun:[10000,30000]},{k:'audit',n:'Accessibility Audit',gulf:[9000,28000],tun:[5000,15000]},{k:'rtl',n:'Bilingual / RTL Adaptation',gulf:[14000,40000],tun:[7000,20000]},{k:'ai',n:'AI Product Design',gulf:[18000,55000],tun:[9000,28000]}];
 const QRET={gulf:{light:[4000,8000],standard:[8000,15000],embedded:[14000,22000]},tun:{light:[2500,4500],standard:[4500,8000],embedded:[8000,12000]}};
 const MARKETS={gulf:[['qatar','Qatar — 0%',0],['saudi','Saudi — 15%',0.15],['uae','UAE — 5%',0.05]],tun:[['tunisia','Tunisia — 19%',0.19]]};
@@ -941,7 +943,7 @@ function renderQuotes(){
     host.appendChild(d);});
 }
 let Q=null;
-const qTier=()=>document.querySelector('input[name=qtier]:checked').value,qCur=()=>qTier()==='gulf'?'QAR':'TND',mid=r=>Math.round((r[0]+r[1])/2),scopeVal=(r,sc)=>sc==='small'?r[0]:sc==='large'?r[1]:mid(r);
+const qTier=()=>document.querySelector('input[name=qtier]:checked').value,qMk=()=>(MKT_CUR[$('qMarket').value]||(qTier()==='gulf'?MKT_CUR.qatar:MKT_CUR.tunisia)),qCur=()=>qMk()[0],cv=v=>{const k=qMk()[1];return k===1?v:Math.round(v*k/100)*100;},cvR=r=>[cv(r[0]),cv(r[1])],mid=r=>Math.round((r[0]+r[1])/2),scopeVal=(r,sc)=>sc==='small'?r[0]:sc==='large'?r[1]:mid(r);
 function openQuote(opts){
   opts=opts||{};const l=opts.lead||null;Q={on:{},scopes:{},custom:[]};
   const t=(l&&l.tier===2)?'gulf':'tun';document.querySelector(`input[name=qtier][value=${t}]`).checked=true;
@@ -953,11 +955,11 @@ function openQuote(opts){
 function qMarkets(){const o=MARKETS[qTier()];$('qMarket').innerHTML=o.map(m=>`<option value="${m[0]}">${m[1]}</option>`).join('');$('qMarket').disabled=qTier()==='tun';}
 document.querySelectorAll('input[name=qtier]').forEach(r=>r.addEventListener('change',()=>{$('qDeposit').value=qTier()==='gulf'?50:40;qMarkets();qRender();}));
 $('qLead').addEventListener('change',()=>{const l=S.leads.find(x=>String(x.id)===$('qLead').value);if(l){$('qCompany').value=l.company;$('qContact').value=l.contact||'';}});
-['qMarket','qDeposit','qRetTier','qRetMonths'].forEach(id=>$(id).addEventListener('input',qCompute));$('qRetOn').addEventListener('change',qCompute);
+['qDeposit','qRetTier','qRetMonths'].forEach(id=>$(id).addEventListener('input',qCompute));$('qMarket').addEventListener('change',qRender);$('qRetOn').addEventListener('change',qCompute);
 $('qAddCustom').addEventListener('click',()=>{Q.custom.push({name:'',value:''});qRenderCustom();const ins=$('qCustom').querySelectorAll('input[type=text]');if(ins.length)ins[ins.length-1].focus();});
 function qRender(){
   const t=qTier(),c=qCur();
-  $('qSvcs').innerHTML=QSVCS.map(s=>{const r=s[t],on=!!Q.on[s.k],sc=Q.scopes[s.k]||'standard';
+  $('qSvcs').innerHTML=QSVCS.map(s=>{const r=cvR(s[t]),on=!!Q.on[s.k],sc=Q.scopes[s.k]||'standard';
     return `<div class="qsvc${on?'':' off'}"><label class="chk"><input type="checkbox" data-on="${s.k}"${on?' checked':''}><span><span class="nm">${s.n}</span><br><span class="rg">${fmt(r[0])}–${fmt(r[1])} ${c}</span></span></label>
       <select class="inline" data-sc="${s.k}" aria-label="Scope for ${s.n}">${['small|Small','standard|Standard','large|Large'].map(o=>{const p=o.split('|');return `<option value="${p[0]}"${p[0]===sc?' selected':''}>${p[1]}</option>`;}).join('')}</select>
       <span class="amt">${on?fmt(scopeVal(r,sc)):'—'}</span></div>`;}).join('');
@@ -971,14 +973,14 @@ function qRenderCustom(){const box=$('qCustom');box.innerHTML='';
     const [n,v,x]=row.children;n.oninput=()=>{it.name=n.value;};v.oninput=()=>{it.value=v.value;qCompute();};x.onclick=()=>{Q.custom.splice(i,1);qRenderCustom();qCompute();};box.appendChild(row);});}
 function qCalc(){
   const t=qTier(),c=qCur();let sub=0;const items=[];
-  QSVCS.forEach(s=>{if(!Q.on[s.k])return;const sc=Q.scopes[s.k]||'standard',v=scopeVal(s[t],sc);sub+=v;items.push({k:s.k,name:s.n,scope:sc,value:v});});
+  QSVCS.forEach(s=>{if(!Q.on[s.k])return;const sc=Q.scopes[s.k]||'standard',v=scopeVal(cvR(s[t]),sc);sub+=v;items.push({k:s.k,name:s.n,scope:sc,value:v});});
   Q.custom.forEach(it=>{const v=Number(it.value)||0;if(!it.name.trim()||!v)return;sub+=v;items.push({k:'custom',name:it.name.trim(),scope:'custom',value:v});});
-  let retainer=null;if($('qRetOn').checked){const months=Math.max(1,Number($('qRetMonths').value)||1),tier=$('qRetTier').value,v=mid(QRET[t][tier])*months;retainer={tier,months,value:v};sub+=v;}
+  let retainer=null;if($('qRetOn').checked){const months=Math.max(1,Number($('qRetMonths').value)||1),tier=$('qRetTier').value,v=mid(cvR(QRET[t][tier]))*months;retainer={tier,months,value:v};sub+=v;}
   const m=MARKETS[t].find(x=>x[0]===$('qMarket').value)||MARKETS[t][0],vr=m[2],vat=sub*vr,dep=Number($('qDeposit').value)||0;
-  return{tier:t,market:m[0],currency:c,items,retainer,subtotal:sub,vat_rate:vr,vat_amount:vat,deposit:dep,deposit_amount:sub*dep/100,total:sub+vat};
+  return{tier:t,market:m[0],currency:c,items,retainer,subtotal:sub,vat_rate:vr,vat_amount:vat,deposit:dep,deposit_amount:(sub+vat)*dep/100,total:sub+vat};
 }
 function qCompute(){const r=qCalc(),c=r.currency,has=r.subtotal>0;
-  $('qSub').textContent=has?fmt(r.subtotal)+' '+c:'—';$('qDepL').textContent=`Deposit (${r.deposit}%)`;$('qDep').textContent=has?fmt(r.deposit_amount)+' '+c:'—';
+  $('qSub').textContent=has?fmt(r.subtotal)+' '+c:'—';$('qDepL').textContent=`Deposit (${r.deposit}% of total)`;$('qDep').textContent=has?fmt(r.deposit_amount)+' '+c:'—';
   $('qVatL').textContent=`VAT (${Math.round(r.vat_rate*100)}%)`;$('qVat').textContent=has?fmt(r.vat_amount)+' '+c:'—';$('qBig').textContent=has?fmt(r.total)+' '+c:'—';}
 async function saveQuote(pdf){
   const r=qCalc(),msg=$('qMsg');msg.className='formmsg';
@@ -998,7 +1000,7 @@ function exportPdf(q){
   doc.setFillColor(...navy);doc.rect(0,0,W,34,'F');doc.setFillColor(18,38,65);doc.roundedRect(m,10,15,15,4,4,'F');doc.setDrawColor(...lime);doc.setLineWidth(1.1);doc.circle(m+7.5,17.5,4.3,'S');doc.setFillColor(...lime);doc.circle(m+7.5,17.5,1.6,'F');
   doc.setTextColor(244,247,252);doc.setFont('helvetica','bold');doc.setFontSize(22);doc.text('TEKYDIS',m+20,19);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(166,180,200);doc.text('Innovate. Build. Transform.',m+20,25);
   doc.setFont('helvetica','bold');doc.setFontSize(16);doc.setTextColor(244,247,252);doc.text('QUOTATION',W-m,19,{align:'right'});
-  let y=46;const date=(q.created_at||new Date().toISOString()).slice(0,10),valid=new Date(new Date(date).getTime()+30*864e5).toISOString().slice(0,10);
+  let y=46;const tz=d=>new Date(d).toLocaleDateString('en-CA',{timeZone:'Africa/Tunis'}),date=tz(q.created_at||Date.now()),valid=new Date(new Date(date).getTime()+30*864e5).toISOString().slice(0,10);
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...mut);doc.text('Quote no.',m,y);doc.text('Date',m,y+5);doc.text('Valid until',m,y+10);
   doc.setTextColor(...tx);doc.setFont('helvetica','bold');doc.text(q.qnum||'—',m+24,y);doc.text(date,m+24,y+5);doc.text(valid,m+24,y+10);
   doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...mut);doc.text('PREPARED FOR',W-m,y,{align:'right'});doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...tx);doc.text(q.company||'—',W-m,y+6,{align:'right'});
@@ -1009,8 +1011,8 @@ function exportPdf(q){
   (q.items||[]).forEach(it=>rowLine(it.name,it.scope==='custom'?'—':(it.scope||'').replace(/^./,c=>c.toUpperCase()),fmt(it.value)));
   if(q.retainer)rowLine('Design Partner Retainer ('+q.retainer.tier+' × '+q.retainer.months+' mo)','monthly',fmt(q.retainer.value));
   y+=4;const lx=W-m-70,tot=(l,v)=>{doc.setFont('helvetica','normal');doc.setTextColor(...mut);doc.text(l,lx,y);doc.text(fmt(v)+' '+q.currency,W-m-3,y,{align:'right'});y+=6;};
-  tot('Subtotal',q.subtotal);tot('Deposit ('+q.deposit+'%)',q.deposit_amount);tot('VAT ('+Math.round((q.vat_rate||0)*100)+'%)',q.vat_amount);
-  doc.setFillColor(...lime);doc.rect(lx-3,y,W-m-lx+3,10,'F');doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...ink);doc.text('TOTAL',lx,y+7);doc.text(fmt(q.total)+' '+q.currency,W-m-3,y+7,{align:'right'});
+  tot('Subtotal',q.subtotal);tot('VAT ('+Math.round((q.vat_rate||0)*100)+'%)',q.vat_amount);
+  doc.setFillColor(...lime);doc.rect(lx-3,y,W-m-lx+3,10,'F');doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(...ink);doc.text('TOTAL',lx,y+7);doc.text(fmt(q.total)+' '+q.currency,W-m-3,y+7,{align:'right'});y+=16;tot('Deposit ('+q.deposit+'% of total)',q.deposit_amount);y-=16;
   y+=22;doc.setFontSize(9);doc.setTextColor(...tx);doc.text('Terms',m,y);doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...mut);
   ['Fixed scope, fixed price. Deposit '+q.deposit+'% on signature; balance on milestones or delivery.','Two revision rounds included per deliverable. Every engagement is designed to WCAG 2.2 AA with full Arabic/English RTL parity.','Quote valid 30 days. Prices exclude third-party costs unless stated. This is a proposal, not an invoice.']
     .forEach(t=>{const ls=doc.splitTextToSize(t,W-2*m);doc.text(ls,m,y+5);y+=5*ls.length+1;});
