@@ -1335,10 +1335,11 @@ function renderPTasks(p,box){
       <div class="when">Updated ${esc(fmtTime(t.updated_at))}</div>
       ${asking?`<div class="ask"><div class="h">${ic('bell','sm')} Needs your answer</div><div class="q">${esc(t.stuck_reason||'The agent needs something from you.')}</div></div>`
         :t.stuck_reason?`<div class="why"><b>Why it's stuck:</b> ${esc(t.stuck_reason)}</div>`:st==='stalled'?`<div class="why"><b>No update since ${esc(fmtTime(t.updated_at))}.</b> The agent stopped reporting. It may have crashed, your Mac may be asleep, or credits ran out.</div>`:''}
-      ${review||asking||(t.output_url&&!hasOut)?`<div class="row">
+      ${review||asking||(t.output_url&&!hasOut)||(hasOut&&t.status==='done'&&!/\.pdf$/i.test(t.output_url))?`<div class="row">
         ${asking?`<button class="btn sm" data-act="answer">${btnHtml('send','Answer')}</button>`:''}
         ${!hasOut&&t.output_url?`<span class="meta">${ic('folder','sm')} On the studio Mac, not uploaded yet</span>`:''}
-        ${review?`<button class="btn sm" data-act="approve">${btnHtml('check','Approve')}</button><button class="btn sec sm" data-act="changes">${btnHtml('edit','Request changes')}</button>`:''}</div>`:''}
+        ${review?`<button class="btn sm" data-act="approve">${btnHtml('check','Approve')}</button><button class="btn sec sm" data-act="changes">${btnHtml('edit','Request changes')}</button>`:''}
+        ${hasOut&&t.status==='done'&&!/\.pdf$/i.test(t.output_url)&&!p.archived_at?(cs.some(c=>c.author==='founder'&&/^Make a client version/.test(c.body))?`<span class="meta">${ic('check','sm')} Client version requested</span>`:`<button class="btn sec sm" data-act="client">${btnHtml('download','Make client version (PDF)')}</button>`):''}</div>`:''}
       <div class="last">${ic('message','sm')}<span class="txt">${last?`<b>${esc(last.author==='founder'?'You':agentName(last.author))}:</b> ${esc(last.body)}`:'No messages yet'}</span>
         <button class="btn sec sm" data-act="thread" aria-label="Open conversation for task ${ix+1}${cs.length?', '+cs.length+' messages':''}">${cs.length?cs.length:''} ${ic('message','sm')}</button></div>
       ${!man?'':`<div class="mc"><select aria-label="Status of task ${ix+1}" data-st>${Object.keys(T_STATUS).map(k=>`<option value="${k}"${k===t.status?' selected':''}>${T_STATUS[k]}</option>`).join('')}</select>
@@ -1348,6 +1349,7 @@ function renderPTasks(p,box){
         <button class="btn danger sm" data-del aria-label="Delete task ${ix+1}">${ic('trash')}</button></div>`}`;
     d.querySelectorAll('[data-act]').forEach(b=>b.onclick=()=>{const k=b.dataset.act;
       if(k==='approve')return approveTask(t,b);
+      if(k==='client')return requestClientVersion(t,b);
       openSide(k==='view'?{kind:'deliverable',tid:t.id}:{kind:'thread',tid:t.id,mode:k==='answer'?'answer':k==='changes'?'changes':'comment'});});
     if(man){const sel=d.querySelector('[data-st]');
       sel.onchange=()=>{if(['stuck','needs_you'].includes(sel.value)){const r=prompt('What is blocking it / what is needed?');if(!r){sel.value=t.status;return;}taskPatch(t,{status:sel.value,stuck_reason:r},`Manual: #${ix+1} ${t.title} → ${T_STATUS[sel.value]}: ${r}`);}
@@ -1365,6 +1367,10 @@ function renderPTasks(p,box){
     const {error}=await db.from('tasks').insert({project_id:p.id,title,agent,stage,sort:ts.length});if(error){toast("Couldn't add: "+error.message,'err');return;}
     await logEvent('task_added','Manual: task added: '+title+(agent?' → '+agentName(agent):''),p.id);$('tTitle').value='';$('tTitle').blur();toast('Task added','ok');load(true);};
 }
+async function requestClientVersion(t,btn){if(btn)btn.disabled=true;
+  const r=await db.from('task_comments').insert({task_id:t.id,project_id:t.project_id,author:'founder',body:'Make a client version of this deliverable as a branded PDF (CLAUDE.md "Client versions").'});
+  if(r.error){if(btn)btn.disabled=false;toast("Couldn't send: "+r.error.message,'err');return;}
+  await logEvent('client_version','You asked for a client PDF of #'+taskNo(t)+' '+t.title,t.project_id);toast('Requested. The CEO adds a Brand Designer task on the next run.','ok');load(true);}
 async function approveTask(t,btn){if(btn)btn.disabled=true;await db.from('task_comments').insert({task_id:t.id,project_id:t.project_id,author:'founder',body:'Approved.'});
   const r=await db.from('tasks').update({status:'done'}).eq('id',t.id);if(r.error){if(btn)btn.disabled=false;toast("Couldn't approve: "+r.error.message,'err');return;}
   await logEvent('approved','You approved #'+taskNo(t)+' '+t.title,t.project_id);toast('Approved','ok');load(true);}
@@ -1405,6 +1411,7 @@ async function loadDeliverable(t,path,name){const r=await db.storage.from(BUCKET
   if(r.error){box.innerHTML=`<p class="formmsg err">Couldn't open it: ${esc(r.error.message)}. It may not have been uploaded.</p>`;return;}
   const url=r.data.signedUrl;if($('sideDl'))$('sideDl').href=url;const ext=(name.split('.').pop()||'').toLowerCase();
   try{if(['png','jpg','jpeg','gif','webp','svg'].includes(ext)){box.innerHTML=`<img src="${esc(url)}" alt="${esc(name)}">`;return;}
+    if(ext==='pdf'){box.innerHTML=`<iframe src="${esc(url)}" title="${esc(name)}" style="width:100%;height:70vh;border:0;border-radius:8px;background:#fff"></iframe>`;return;}
     if(['md','markdown','txt','csv','json','log'].includes(ext)){const txt=await (await fetch(url)).text();if(!$('sideBody'))return;
       if(ext==='md'||ext==='markdown'){await loadLibs();$('sideBody').innerHTML=DOMPurify.sanitize(marked.parse(txt));}else $('sideBody').innerHTML=`<pre>${esc(txt)}</pre>`;return;}
     box.innerHTML='<p class="d-note">This file type can\'t be previewed here. Use Download.</p>';}catch(e){box.innerHTML=`<p class="formmsg err">${esc(e.message)}</p>`;}}
