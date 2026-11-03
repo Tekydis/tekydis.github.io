@@ -143,10 +143,10 @@
   .segc button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .linkbtn{background:none;border:0;color:var(--muted);font:inherit;font-size:.86rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px;padding:0 4px}
   .linkbtn:hover{color:var(--accent)}
-  /* Lime 900 #293209 → Lime 600 #A5C23D (Figma). Dark end sits under the text so white text passes WCAG AA (measured 6.3–13.5:1). */
-  .kpi.hero{background:linear-gradient(90deg,#293209 0%,#293209 35%,#A5C23D 100%);border-color:rgba(215,253,83,.35);color:#fff}
-  .kpi.hero .l,.kpi.hero .v,.kpi.hero .v small,.kpi.hero .go{color:#fff} .kpi.hero:hover{border-color:var(--accent)}
-  .kpi .sub{font-size:.76rem;color:var(--subtle);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .kpi.hero .sub{color:#fff;font-weight:600;max-width:55%}
+  /* Navy 300 #4376BA (Figma). White text = 4.6:1, passes WCAG AA. */
+  .kpi.hero{background:#4376BA;border-color:#4376BA;color:#fff}
+  .kpi.hero .l,.kpi.hero .v,.kpi.hero .v small,.kpi.hero .go{color:#fff} .kpi.hero:hover{border-color:#DDE5F9}
+  .kpi .sub{font-size:.76rem;color:var(--subtle);margin-top:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .kpi.hero .sub{color:#fff;font-weight:600}
   .tsep{flex:none;width:1px;align-self:stretch;margin:6px 8px;background:var(--line-strong)}
   .ovp{display:grid;grid-template-columns:minmax(0,1.5fr) 128px minmax(110px,1fr) 104px 196px;gap:14px;align-items:center;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:12px 2px;color:inherit;text-align:left;cursor:pointer;font:inherit}
   .ovp:first-child{border-top:0} .ovp:hover .t{color:var(--accent)} .ovp .t{font-weight:600;overflow-wrap:anywhere} .ovp .fl{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
