@@ -91,7 +91,9 @@
   .pp-back{margin-bottom:14px}
   .pp-head{display:flex;gap:16px;align-items:flex-start}
   .pp-head .d-av{flex:none;width:52px;height:52px;margin:0;border-radius:var(--r-sm)}
-  .pp-head h1{font-family:var(--sans);font-weight:700;font-size:clamp(1.4rem,3vw,2rem);line-height:1.15;margin:2px 0 8px;overflow-wrap:anywhere}
+  .pp-head .hrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;min-width:0}
+  .pp-head h1{font-family:var(--sans);font-weight:700;font-size:clamp(1.4rem,3vw,2rem);line-height:1.15;margin:0;overflow-wrap:anywhere}
+  .pp-head .pp-head-in{min-width:0;align-self:center}
   .pp-bar{display:flex;gap:12px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line);margin:18px 0 0}
   .pp-bar .ptabs{border:0;margin:0;flex:1;min-width:0}
   .pp-acts{display:flex;gap:8px;align-items:center;padding-bottom:8px;flex:none;position:relative}
@@ -114,6 +116,8 @@
   .task2.sel{border-color:var(--accent)}
   .task2 .t1{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
   .task2 .t1 .lft{display:flex;gap:8px;align-items:center;min-width:0}
+  .task2 .t1 .rgt{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  @media (max-width:560px){.task2 .t1{align-items:flex-start}.task2 .t1 .rgt{flex-direction:column-reverse;align-items:flex-end}}
   .task2 .tno{font-family:var(--mono);font-size:.78rem;color:var(--accent);font-weight:600;margin:0}
   .task2 .tt{font-weight:600;font-size:1rem;line-height:1.4;overflow-wrap:anywhere}
   .task2 .who{font-size:.86rem;color:var(--muted);margin-top:4px}
@@ -133,10 +137,10 @@
   .projgrp h3{display:flex;gap:8px;align-items:center;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--subtle);margin:0 0 10px;font-weight:700}
   .projgrp h3 .n{font-family:var(--mono);color:var(--muted);letter-spacing:0}
   .projtools{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:16px}
-  .seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;padding:3px;background:var(--field)}
-  .seg button{border:0;background:none;color:var(--muted);font:inherit;font-size:.84rem;font-weight:500;padding:7px 14px;border-radius:999px;min-height:38px;cursor:pointer}
-  .seg button[aria-pressed=true]{background:var(--fg);color:var(--accent-ink)}
-  .seg button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .segc{display:inline-flex;flex-wrap:nowrap;border:1px solid var(--line-strong);border-radius:999px;padding:3px;background:var(--field);max-width:100%;overflow-x:auto}
+  .segc button{white-space:nowrap;border:0;background:none;color:var(--muted);font:inherit;font-size:.84rem;font-weight:500;padding:7px 14px;border-radius:999px;min-height:38px;cursor:pointer}
+  .segc button[aria-pressed=true]{background:var(--fg);color:var(--accent-ink)}
+  .segc button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   .linkbtn{background:none;border:0;color:var(--muted);font:inherit;font-size:.86rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:44px;padding:0 4px}
   .linkbtn:hover{color:var(--accent)}
   .kpi.hero{background:linear-gradient(135deg,#E5FEA3 0%,#D7FD53 55%,#A5C23D 100%);border-color:transparent;color:#071425}
@@ -581,7 +585,7 @@
   </section>
   <section id="view-quotes" role="tabpanel" aria-labelledby="tab-quotes" hidden><div id="quoteBody"></div></section>
   <section id="view-projects" role="tabpanel" aria-labelledby="tab-projects" hidden>
-    <div class="projtools"><div class="seg" role="group" aria-label="Project type" id="projType"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="delivery" aria-pressed="false">Delivery</button><button type="button" data-f="prospecting" aria-pressed="false">Prospecting</button></div>
+    <div class="projtools"><div class="segc" role="group" aria-label="Project type" id="projType"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="delivery" aria-pressed="false">Delivery</button><button type="button" data-f="prospecting" aria-pressed="false">Prospecting</button></div>
       <button type="button" class="linkbtn" id="projArch"></button></div>
     <div id="projBody"></div>
   </section>
@@ -751,8 +755,6 @@
 <div class="scrim" id="scrim"></div>
 <aside class="drawer" id="drawer" aria-hidden="true"></aside>
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-<div style="display:flex;gap:8px"><a class="btn sec sm" id="vDl" target="_blank" rel="noopener">Download</a><button class="btn sec sm" id="vClose" aria-label="Close">✕</button></div></div>
-  <div class="vb" id="vBody"></div></div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
@@ -1237,8 +1239,8 @@ function refreshProjectDrawer(){if(!OPEN_PID||!onProject())return;if(!curP()){cl
   if(!(typing&&$('view-project').contains(a))){renderPHead();renderPPanel();}
   if(!(typing&&$('pSide').contains(a)))renderSide();loadPEV();}
 function renderPHead(){const p=curP();if(!p)return;const pros=p.pipeline==='prospecting',ds=p.archived_at?'archived':p.status;
-  $('pHead').innerHTML=`<div class="pp-head"><div class="d-av" style="background:${pros?'#6FC9E8':'#B48CF2'}">${ic(pros?'pin':'folder')}</div><div style="min-width:0">
-    <h1>${esc(p.name)}</h1><div class="d-rl" data-s="${esc(ds)}" style="margin:0"><span class="status"><span class="sl"></span>${p.archived_at?'Archived':P_STATUS[p.status]||esc(p.status)}</span><span class="chip">${pros?'Prospecting':'Delivery'}</span><span class="chip">${p.progress||0}%</span>${projFlags(p)}</div></div></div>`;
+  $('pHead').innerHTML=`<div class="pp-head"><div class="d-av" style="background:${pros?'#6FC9E8':'#B48CF2'}">${ic(pros?'pin':'folder')}</div><div class="pp-head-in"><div class="hrow">
+    <h1>${esc(p.name)}</h1><div class="d-rl" data-s="${esc(ds)}" style="margin:0"><span class="status"><span class="sl"></span>${p.archived_at?'Archived':P_STATUS[p.status]||esc(p.status)}</span><span class="chip">${pros?'Prospecting':'Delivery'}</span><span class="chip">${p.progress||0}%</span>${projFlags(p)}</div></div></div></div>`;
   const acts=$('pActs');acts.innerHTML='';const mk=(cls,icn,l,fn)=>{const b=document.createElement('button');b.className='btn sm '+cls;b.type='button';b.innerHTML=btnHtml(icn,l);b.onclick=()=>fn(b);acts.appendChild(b);return b;};
   if(p.archived_at){mk('','undo','Restore',b=>projPatch(p,{archived_at:null},'Restored from archive',b));return;}
   if(p.status==='draft')mk('','send','Send to the studio',b=>projPatch(p,{status:'requested',sent_at:new Date().toISOString()},'Sent to the studio',b));
@@ -1326,15 +1328,15 @@ function renderPTasks(p,box){
   ts.forEach((t,ix)=>{const st=tState(t),cs=commentsOf(t.id),last=cs[cs.length-1],a=S.agents.find(x=>x.slug===t.agent),d=document.createElement('article');
     d.className='task2'+(SIDE&&SIDE.tid===t.id?' sel':'');d.dataset.s=st;
     const hasOut=(t.output_url||'').startsWith('storage:'),review=t.status==='review'&&!p.archived_at,asking=t.status==='needs_you'&&!p.archived_at;
-    d.innerHTML=`<div class="t1"><div class="lft"><span class="tno">#${ix+1}</span>${t.stage?`<span class="stg">${esc(t.stage)}</span>`:''}</div><span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div>
+    d.innerHTML=`<div class="t1"><div class="lft"><span class="tno">#${ix+1}</span>${t.stage?`<span class="stg">${esc(t.stage)}</span>`:''}</div><div class="rgt">${hasOut?`<button class="btn sec sm" data-act="view">${btnHtml('ext','Open deliverable')}</button>`:''}<span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div></div>
       <div class="tt">${esc(t.title)}</div>
       <div class="who">${a?`${esc(roleOf(a))} · ${esc(nameOf(a))}`:t.agent?esc(t.agent):'Unassigned'}</div>
       <div class="when">Updated ${esc(fmtTime(t.updated_at))}</div>
       ${asking?`<div class="ask"><div class="h">${ic('bell','sm')} Needs your answer</div><div class="q">${esc(t.stuck_reason||'The agent needs something from you.')}</div></div>`
         :t.stuck_reason?`<div class="why"><b>Why it's stuck:</b> ${esc(t.stuck_reason)}</div>`:st==='stalled'?`<div class="why"><b>No update since ${esc(fmtTime(t.updated_at))}.</b> The agent stopped reporting. It may have crashed, your Mac may be asleep, or credits ran out.</div>`:''}
-      ${hasOut||review||asking||(t.output_url&&!hasOut)?`<div class="row">
+      ${review||asking||(t.output_url&&!hasOut)?`<div class="row">
         ${asking?`<button class="btn sm" data-act="answer">${btnHtml('send','Answer')}</button>`:''}
-        ${hasOut?`<button class="btn ${review?'sec':'sec'} sm" data-act="view">${btnHtml('ext','Open deliverable')}</button>`:t.output_url?`<span class="meta">${ic('folder','sm')} On the studio Mac, not uploaded yet</span>`:''}
+        ${!hasOut&&t.output_url?`<span class="meta">${ic('folder','sm')} On the studio Mac, not uploaded yet</span>`:''}
         ${review?`<button class="btn sm" data-act="approve">${btnHtml('check','Approve')}</button><button class="btn sec sm" data-act="changes">${btnHtml('edit','Request changes')}</button>`:''}</div>`:''}
       <div class="last">${ic('message','sm')}<span class="txt">${last?`<b>${esc(last.author==='founder'?'You':agentName(last.author))}:</b> ${esc(last.body)}`:'No messages yet'}</span>
         <button class="btn sec sm" data-act="thread" aria-label="Open conversation for task ${ix+1}${cs.length?', '+cs.length+' messages':''}">${cs.length?cs.length:''} ${ic('message','sm')}</button></div>
