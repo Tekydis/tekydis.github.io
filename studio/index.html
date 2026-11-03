@@ -162,6 +162,11 @@
   .dz{border:1px solid rgba(242,118,138,.45);border-radius:12px;padding:13px;margin-top:10px}
   .dz p{margin:0 0 10px;font-size:.85rem;color:var(--muted)}
   .pacts{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0 0}
+  .frow{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--line)}
+  .frow a,.frow .fmiss{display:inline-flex;gap:6px;align-items:center;flex:1;min-width:0;overflow-wrap:anywhere}
+  .frow .fmiss{color:var(--red)} .frow .btn{flex:none}
+  .fadd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .fadd input:focus-visible+*{outline:2px solid var(--accent)} .fadd label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .addtask{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:10px}
   @media (max-width:560px){.addtask{grid-template-columns:1fr}}
@@ -1127,9 +1132,37 @@ function renderPPanel(){const p=curP(),box=$('pPanel');if(!p||!box)return;
   if($('dzName')){const inp=$('dzName'),btn=$('dzBtn');inp.oninput=()=>{btn.disabled=inp.value!==p.name;};btn.onclick=()=>deleteProject(p,inp.value,btn);}
   loadFiles(p);
 }
+async function uploadFiles(pid,files,progress){const failed=[];
+  for(let i=0;i<files.length;i++){const f=files[i];if(progress)progress(i+1,files.length,f.name);
+    if(f.size>50*1024*1024){failed.push(f.name+' (over 50 MB)');continue;}
+    const path=`${pid}/${Date.now()}-${f.name.replace(/[^\w.\-]+/g,'_')}`;
+    const up=await db.storage.from(BUCKET).upload(path,f,{upsert:false,contentType:f.type||undefined});
+    if(up.error){failed.push(f.name+' ('+up.error.message+')');continue;}
+    const chk=await db.storage.from(BUCKET).createSignedUrl(path,60);   /* prove it is really stored */
+    if(chk.error){failed.push(f.name+' (upload did not reach storage)');continue;}
+    const row=await db.from('project_files').insert({project_id:pid,name:f.name,path,size:f.size,mime:f.type||null});
+    if(row.error){await db.storage.from(BUCKET).remove([path]);failed.push(f.name+' ('+row.error.message+')');continue;}
+    await logEvent('file_added','File added: '+f.name,pid);}
+  return failed;}
 async function loadFiles(p){const {data,error}=await db.from('project_files').select('*').eq('project_id',p.id).order('created_at');const fl=$('dFiles');if(!fl)return;
-  if(error||!(data||[]).length){fl.textContent='No files.';return;}fl.innerHTML='';
-  for(const file of data){const r=await db.storage.from(BUCKET).createSignedUrl(file.path,3600);const a=document.createElement('a');a.innerHTML=ic('clip','sm')+' '+esc(file.name);a.target='_blank';a.rel='noopener';a.style.cssText='display:inline-flex;gap:6px;align-items:center;padding:4px 0';if(r.data&&r.data.signedUrl)a.href=r.data.signedUrl;const dv=document.createElement('div');dv.appendChild(a);if($('dFiles')===fl)fl.appendChild(dv);}}
+  fl.innerHTML='';const rows=data||[];if(error||!rows.length)fl.innerHTML='<p class="d-note">No files.</p>';
+  for(const file of rows){const r=await db.storage.from(BUCKET).createSignedUrl(file.path,3600),ok=!!(r.data&&r.data.signedUrl);
+    const dv=document.createElement('div');dv.className='frow';
+    dv.innerHTML=ok?`<a href="${esc(r.data.signedUrl)}" target="_blank" rel="noopener">${ic('clip','sm')} ${esc(file.name)}</a><span class="meta">${file.size?Math.max(1,Math.round(file.size/1024))+' KB':''}</span>`
+      :`<span class="fmiss">${ic('alert','sm')} ${esc(file.name)}</span><span class="flag">Missing, re-upload it</span>`;
+    if(!p.archived_at){const x=document.createElement('button');x.className='btn danger sm';x.type='button';x.setAttribute('aria-label','Remove '+file.name);x.innerHTML=ic('trash');
+      x.onclick=async()=>{if(!x.dataset.c){x.dataset.c='1';x.innerHTML=btnHtml('trash','Tap again');setTimeout(()=>{if(x.isConnected){x.dataset.c='';x.innerHTML=ic('trash');}},3000);return;}
+        x.disabled=true;if(ok)await db.storage.from(BUCKET).remove([file.path]);const d=await db.from('project_files').delete().eq('path',file.path);
+        if(d.error){x.disabled=false;toast("Couldn't remove: "+d.error.message,'err');return;}await logEvent('file_removed','File removed: '+file.name,p.id);toast('File removed','ok');loadFiles(p);};
+      dv.appendChild(x);}
+    if($('dFiles')===fl)fl.appendChild(dv);}
+  if(!p.archived_at&&$('dFiles')===fl){const w=document.createElement('div');w.className='fadd';
+    w.innerHTML=`<label class="btn sec sm" for="fAdd">${btnHtml('clip','Add files')}</label><input type="file" id="fAdd" multiple class="sr"><span class="formmsg" id="fMsg" role="status" aria-live="polite"></span>`;
+    fl.appendChild(w);const inp=$('fAdd');
+    inp.onchange=async()=>{const fs=[...inp.files];if(!fs.length)return;const m=$('fMsg');
+      const failed=await uploadFiles(p.id,fs,(i,n,nm)=>{m.className='formmsg';m.textContent=`Uploading ${i} of ${n}: ${nm}…`;});
+      inp.value='';if(failed.length){toast(failed.length+' file(s) failed: '+failed.join(', '),'err');}else toast(fs.length+' file'+(fs.length>1?'s':'')+' added','ok');loadFiles(p);load(true);};}
+}
 async function deleteProject(p,typed,btn){const m=$('dzMsg');btn.disabled=true;m.className='formmsg';m.textContent='Deleting…';
   const f=await db.from('project_files').select('path').eq('project_id',p.id);const paths=(f.data||[]).map(x=>x.path);
   const {error}=await db.rpc('delete_project',{pid:p.id,confirm_name:typed});
@@ -1210,11 +1243,10 @@ $('pform').addEventListener('submit',async e=>{e.preventDefault();const asDraft=
   else{const cl=$('pclient').value.trim(),sv=$('pservice').value.trim(),v=Number($('pvalue').value)||0;if(cl)row.client=cl;if(sv)row.service=sv;if(v){row.value=v;row.currency=$('pcur').value;}if($('pdue').value)row.due=$('pdue').value;if(cl||v)row.tier=Number($('ptier').value);}
   const {data,error}=await db.from('projects').insert(row).select().single();
   if(error){btn.disabled=false;msg.className='formmsg err';msg.textContent="Couldn't create the project: "+error.message;return;}
-  let failed=0;for(let i=0;i<files.length;i++){const f=files[i];msg.textContent=`Uploading file ${i+1} of ${files.length}…`;const path=`${data.id}/${Date.now()}-${f.name.replace(/[^\w.\-]+/g,'_')}`;
-    const up=await db.storage.from(BUCKET).upload(path,f,{upsert:false,contentType:f.type||undefined});if(up.error){failed++;continue;}await db.from('project_files').insert({project_id:data.id,name:f.name,path,size:f.size,mime:f.type||null});}
+  const failedList=await uploadFiles(data.id,files,(i,n)=>{msg.textContent=`Uploading file ${i} of ${n}…`;}),failed=failedList.length;
   await logEvent('project_created',(asDraft?'Draft saved: ':'Project sent to the studio: ')+name,data.id);
   btn.disabled=false;$('pform').reset();$('flist').innerHTML='';$('radOut').textContent='5 km';if(circle)circle.setRadius(5000);
-  closeModals();showTab('projects');toast(failed?`Project saved, but ${failed} file(s) failed to upload`:asDraft?'Draft saved. Send it to the studio when it\'s ready.':'Sent to the studio. The CEO picks it up on the next check.',failed?'err':'ok');load(true);});
+  closeModals();showTab('projects');toast(failed?`Project saved, but ${failed} file(s) failed: ${failedList.join(', ')}. Add them again from the project's Files.`:asDraft?'Draft saved. Send it to the studio when it\'s ready.':'Sent to the studio. The CEO picks it up on the next check.',failed?'err':'ok');load(true);});
 
 /* ---------- user menu + settings ---------- */
 function closeMenu(focusBtn){$('umenu').hidden=true;$('ubtn').setAttribute('aria-expanded','false');if(focusBtn)$('ubtn').focus();}
