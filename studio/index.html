@@ -312,10 +312,16 @@
   [data-s="working"] .light{background:var(--accent)}
   [data-s="working"] .av::after{content:"";position:absolute;inset:-5px;border-radius:17px;border:2px solid var(--accent);opacity:.0;animation:breathe 2.4s var(--ease) infinite}
   @keyframes breathe{0%{opacity:.55;transform:scale(.96)}100%{opacity:0;transform:scale(1.12)}}
-  /* Working agent: lime outline + soft pulse, same colour as the moving line on the tree */
-  .acard[data-s="working"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 0 18px -6px rgba(215,253,83,.55);animation:workglow 2.4s var(--ease) infinite}
-  .acard[data-s="working"]:hover{border-color:var(--accent)}
-  @keyframes workglow{0%,100%{box-shadow:0 0 0 1px var(--accent) inset,0 0 10px -6px rgba(215,253,83,.35)}50%{box-shadow:0 0 0 1px var(--accent) inset,0 0 26px -4px rgba(215,253,83,.6)}}
+  /* Working agent: a lime light travels around the card border, like the pulse on the tree line */
+  @property --ang{syntax:'<angle>';initial-value:0deg;inherits:false}
+  .acard[data-s="working"]{border-color:rgba(215,253,83,.35)}
+  .acard[data-s="working"]:hover{border-color:rgba(215,253,83,.6)}
+  .acard[data-s="working"]::before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:2px;pointer-events:none;
+    background:conic-gradient(from var(--ang),transparent 0deg,transparent 200deg,rgba(215,253,83,.25) 260deg,#D7FD53 330deg,#F9FFEC 345deg,rgba(215,253,83,0) 360deg);
+    -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+    animation:borderrun 2.8s linear infinite;filter:drop-shadow(0 0 4px rgba(215,253,83,.6))}
+  @keyframes borderrun{to{--ang:360deg}}
+  @media (prefers-reduced-motion:reduce){.acard[data-s="working"]{border-color:var(--accent)}.acard[data-s="working"]::before{display:none}}
   .acard[data-s="waiting_on_you"]{border-color:rgba(245,196,81,.6)} .acard[data-s="stuck"]{border-color:rgba(242,118,138,.6)}
   [data-s="waiting_on_you"] .light{background:var(--amber)} [data-s="waiting_on_room"] .light{background:var(--violet)} [data-s="stuck"] .light{background:var(--red)}
   .who{min-width:0}
