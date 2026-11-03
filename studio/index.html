@@ -88,6 +88,11 @@
   .bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:16px 0 20px}
   .tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--field);overflow-x:auto;max-width:100%;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
+  .tsep{flex:none;width:1px;align-self:stretch;margin:6px 8px;background:var(--line-strong)}
+  .ovp{display:grid;grid-template-columns:minmax(0,1.5fr) 128px minmax(110px,1fr) 104px 196px;gap:14px;align-items:center;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:12px 2px;color:inherit;text-align:left;cursor:pointer;font:inherit}
+  .ovp:first-child{border-top:0} .ovp:hover .t{color:var(--accent)} .ovp .t{font-weight:600;overflow-wrap:anywhere} .ovp .fl{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+  .ovp:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+  @media (max-width:720px){.ovp{grid-template-columns:1fr auto}.ovp .bar6,.ovp .meta{grid-column:1/-1}.ovp .fl{grid-column:1/-1}}
   .tab{flex:none;display:inline-flex;align-items:center;gap:7px;border:0;background:transparent;color:var(--muted);font-size:.86rem;font-weight:500;padding:9px 14px;border-radius:999px;cursor:pointer;min-height:42px;white-space:nowrap;transition:background .2s,color .2s}
   .tab:hover{color:var(--fg)}
   .tab[aria-selected="true"]{background:var(--elev-2);color:var(--fg);box-shadow:inset 0 0 0 1px var(--line-strong)}
@@ -478,10 +483,11 @@
     <div class="tabs" role="tablist" aria-label="Studio sections">
       <button class="tab" role="tab" data-tab="overview" id="tab-overview" data-ic="grid">Overview</button>
       <button class="tab" role="tab" data-tab="floor" id="tab-floor" data-ic="users">Floor</button>
+      <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="n" id="nProj"></span></button>
+      <span class="tsep" aria-hidden="true"></span>
+      <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="n" id="nPros"></span></button>
       <button class="tab" role="tab" data-tab="pipeline" id="tab-pipeline" data-ic="funnel">Pipeline<span class="n" id="nPipe"></span></button>
       <button class="tab" role="tab" data-tab="quotes" id="tab-quotes" data-ic="receipt">Quotes<span class="n" id="nQuotes"></span></button>
-      <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="n" id="nProj"></span></button>
-      <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="n" id="nPros"></span></button>
     </div>
     <button class="btn newbtn" id="newBtn" type="button"></button>
   </div>
@@ -489,9 +495,10 @@
   <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
     <div class="kpis" id="kpis"></div>
     <div class="card needs-card"><h2 data-ic="bell">Waiting on you <small id="needsN"></small></h2><ul class="needlist" id="needsList"></ul></div>
+    <div class="card" style="margin-top:16px"><h2 data-ic="folder">Active projects</h2><div id="ovProjects"></div></div>
     <div class="ov-grid">
+      <div class="card"><h2 data-ic="pin">Prospects <small id="ovProsN"></small></h2><div id="ovPros"></div></div>
       <div class="card"><h2 data-ic="funnel">Pipeline by stage <small>≈ USD</small></h2><div id="stageBars"></div></div>
-      <div class="card"><h2 data-ic="folder">Active projects</h2><div id="ovProjects"></div></div>
     </div>
     <div class="card" style="margin-top:16px"><h2 data-ic="activity">Recent activity</h2><ul class="act" id="activity"></ul></div>
   </section>
@@ -885,7 +892,7 @@ function renderOverview(){
   const weighted=S.leads.reduce((a,l)=>a+usd(l.value,l.currency)*stp(l.stage),0),qOut=S.quotes.filter(q=>q.status==='pending'||q.status==='sent').reduce((a,q)=>a+usd(q.total,q.currency),0);
   const qAcc=S.quotes.filter(q=>q.status==='accepted').reduce((a,q)=>a+usd(q.total,q.currency),0),act=S.projects.filter(isActive);
   const working=S.agents.filter(a=>a.status==='working').length,toReview=S.prospects.filter(x=>(x.status||'new')==='new').length;
-  const K=[['funnel','Open pipeline',openV,'$','≈USD','pipeline',''],['target','Weighted',weighted,'$','≈USD','pipeline','hi'],['receipt','Quotes out',qOut,'$','≈USD','quotes',''],['folder','Active projects',act.length,'','','projects',''],['users','Agents working',working,'','of '+S.agents.length,'floor',''],['pin','Prospects to review',toReview,'','','prospects',toReview?'warn':'']];
+  const K=[['folder','Active projects',act.length,'','','projects',''],['users','Agents working',working,'','of '+S.agents.length,'floor',''],['pin','Prospects to review',toReview,'','','prospects',toReview?'warn':''],['funnel','Open pipeline',openV,'$','≈USD','pipeline',''],['target','Weighted',weighted,'$','≈USD','pipeline','hi'],['receipt','Quotes out',qOut,'$','≈USD','quotes','']];
   const box=$('kpis');box.innerHTML='';
   K.forEach(k=>{const b=document.createElement('button');b.className='kpi '+k[6];b.innerHTML=`<span class="go">${ic('arrow','sm')}</span><div class="l">${ic(k[0],'sm')}${k[1]}</div><div class="v tnum"><span></span><small>${k[4]}</small></div>`;
     b.onclick=()=>showTab(k[5]);countUp(b.querySelector('.v span'),k[2],k[3]);box.appendChild(b);});
@@ -902,9 +909,17 @@ function renderOverview(){
   let max=1;const vals=STAGES.map(st=>{const ls=S.leads.filter(l=>l.stage===st.k),v=ls.reduce((a,l)=>a+usd(l.value,l.currency),0);if(v>max)max=v;return{st,n:ls.length,v};});
   $('stageBars').innerHTML=S.leads.length?vals.map(x=>`<div class="stagebar"><span class="st-${x.st.k}">${x.st.l} (${x.n})</span><span class="bar6"><i style="width:${Math.max(2,x.v/max*100)}%"></i></span><span class="amt">$${fmt(x.v)}</span></div>`).join(''):`<p class="empty">${ic('funnel')}No leads yet. Approve a prospect or add one in Pipeline.</p>`;
   const ov=$('ovProjects');ov.innerHTML='';
-  if(!act.length) ov.innerHTML=`<p class="empty">${ic('folder')}No active projects.</p>`;
-  else act.slice(0,6).forEach(p=>{const r=document.createElement('button');r.className='rowi';r.style.cssText='width:100%;background:none;border-left:0;border-right:0;border-bottom:0;text-align:left;cursor:pointer;color:inherit';r.dataset.s=p.status;
-    r.innerHTML=`<span class="t">${esc(p.name)}</span><span class="status"><span class="sl"></span>${P_STATUS[p.status]||esc(p.status)}</span>${ic('chev','sm')}`;r.onclick=()=>openProject(p);ov.appendChild(r);});
+  if(!act.length) ov.innerHTML=`<p class="empty">${ic('folder')}No active projects. Send one to the studio from Projects.</p>`;
+  else act.forEach(p=>{const ts=tasksOf(p.id),dn=ts.filter(t=>t.status==='done').length,now=ts.find(t=>tState(t)==='working'),r=document.createElement('button');r.className='ovp';r.dataset.s=p.status;
+    r.innerHTML=`<span><span class="t">${esc(p.name)}</span><br><span class="meta">${now?'Now: #'+taskNo(now)+' '+esc(now.title)+' · '+esc(agentName(now.agent)):ts.length?'Next run picks up the next task':'Waiting for the CEO to plan it'}</span></span>
+      <span class="status"><span class="sl"></span>${P_STATUS[p.status]||esc(p.status)}</span><span class="bar6"><i style="width:${Math.max(2,p.progress||0)}%"></i></span><span class="meta">${dn}/${ts.length} tasks · ${p.progress||0}%</span><span class="fl">${projFlags(p)}${ic('chev','sm')}</span>`;
+    r.onclick=()=>{PTAB='tasks';openProject(p);};ov.appendChild(r);});
+  const pp=S.projects.filter(p=>p.pipeline==='prospecting'&&!p.archived_at&&p.status!=='done'),pa=S.agents.find(a=>a.slug==='prospector'),ovp=$('ovPros'),newN=S.prospects.filter(x=>(x.status||'new')==='new').length;
+  $('ovProsN').textContent=S.prospects.length?S.prospects.length+' found':'';
+  ovp.innerHTML=`<p class="meta" style="margin:0 0 10px">${pa?esc(roleOf(pa))+' · '+esc(nameOf(pa))+': '+(pa.status==='working'?'<b style="color:var(--accent)">working</b>'+(pa.current_task?' · '+esc(pa.current_task):''):'idle'):''}</p>
+    ${pp.length?pp.map(p=>{const n=S.prospects.filter(x=>x.project_id===p.id),nw=n.filter(x=>(x.status||'new')==='new').length;return `<div class="stagebar" style="grid-template-columns:1fr auto"><span>${esc(p.name)}</span><span class="meta">${n.length} found${nw?` · <b style="color:var(--amber)">${nw} to review</b>`:''}</span></div>`;}).join(''):`<p class="empty">${ic('pin')}No prospecting search running. Start one from Projects → New → Prospecting.</p>`}
+    ${newN?`<button class="btn sm" id="ovProsGo" style="margin-top:12px">${btnHtml('pin','Review '+newN+' prospect'+(newN>1?'s':''))}</button>`:''}`;
+  if($('ovProsGo'))$('ovProsGo').onclick=()=>showTab('prospects');
   $('activity').innerHTML=S.events.length?S.events.map(e=>{const a=S.agents.find(x=>x.slug===e.agent);const col=a?AV_COLOR[a.pod]:(e.agent==='founder'?'#F4F7FC':'#7F8EA6');const icn=a?ROLE_IC[a.slug]:(e.agent==='founder'?'user':'activity');
     return `<li><span class="who-av" style="background:${col}">${ic(icn)}</span><span><time>${esc(fmtTime(e.created_at))} · ${esc(agentName(e.agent))}</time>${esc(e.body)}</span></li>`;}).join(''):`<li class="empty">${ic('activity')}No activity yet.</li>`;
 }
