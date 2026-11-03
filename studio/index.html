@@ -312,6 +312,11 @@
   [data-s="working"] .light{background:var(--accent)}
   [data-s="working"] .av::after{content:"";position:absolute;inset:-5px;border-radius:17px;border:2px solid var(--accent);opacity:.0;animation:breathe 2.4s var(--ease) infinite}
   @keyframes breathe{0%{opacity:.55;transform:scale(.96)}100%{opacity:0;transform:scale(1.12)}}
+  /* Working agent: lime outline + soft pulse, same colour as the moving line on the tree */
+  .acard[data-s="working"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset,0 0 18px -6px rgba(215,253,83,.55);animation:workglow 2.4s var(--ease) infinite}
+  .acard[data-s="working"]:hover{border-color:var(--accent)}
+  @keyframes workglow{0%,100%{box-shadow:0 0 0 1px var(--accent) inset,0 0 10px -6px rgba(215,253,83,.35)}50%{box-shadow:0 0 0 1px var(--accent) inset,0 0 26px -4px rgba(215,253,83,.6)}}
+  .acard[data-s="waiting_on_you"]{border-color:rgba(245,196,81,.6)} .acard[data-s="stuck"]{border-color:rgba(242,118,138,.6)}
   [data-s="waiting_on_you"] .light{background:var(--amber)} [data-s="waiting_on_room"] .light{background:var(--violet)} [data-s="stuck"] .light{background:var(--red)}
   .who{min-width:0}
   .who .role{display:block;font-family:var(--display);font-weight:600;font-size:1.22rem;line-height:1.05;letter-spacing:.01em}
