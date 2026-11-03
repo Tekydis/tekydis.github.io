@@ -167,6 +167,13 @@
   .frow .fmiss{color:var(--red)} .frow .btn{flex:none}
   .fadd{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px}
   .fadd input:focus-visible+*{outline:2px solid var(--accent)} .fadd label:focus-within{outline:2px solid var(--accent);outline-offset:2px}
+  .chk.tog{display:flex;gap:10px;align-items:flex-start;margin:4px 0 14px;cursor:pointer} .chk.tog input{width:20px;height:20px;margin-top:2px;accent-color:var(--accent);flex:none}
+  .chk.tog .nm{font-weight:600} .chk.tog .rg{font-size:.82rem;color:var(--subtle)}
+  .rev{border:1px solid rgba(215,253,83,.35);background:rgba(215,253,83,.05);border-radius:12px;padding:12px;margin-top:10px}
+  .rev .h{font-weight:700;color:var(--accent);font-size:.86rem;margin-bottom:8px;display:flex;gap:6px;align-items:center}
+  .rev .acts{display:flex;gap:8px;flex-wrap:wrap} .rev textarea{min-height:70px;margin-top:8px}
+  .ro{font-size:.8rem;color:var(--subtle);margin-top:10px;display:flex;gap:6px;align-items:center}
+  .hpill.paused{border-color:rgba(245,196,81,.5);color:var(--amber)}
   .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .addtask{display:grid;grid-template-columns:1fr auto auto;gap:8px;margin-top:10px}
   @media (max-width:560px){.addtask{grid-template-columns:1fr}}
@@ -657,8 +664,13 @@
     <button class="btn sm" id="sSavePass" type="button"></button><div class="formmsg" id="sMsgPass" role="status"></div>
   </section>
   <section class="set-sec" id="set-studio">
-    <h3 data-ic="bell">Studio</h3><p>If a task says "Working" but gets no update for this long, the portal marks it Stuck.</p>
-    <div class="fgrid"><div class="field"><label class="lbl" for="sStall">Flag as stuck after</label><select id="sStall"><option value="1">1 hour</option><option value="2">2 hours</option><option value="4">4 hours</option><option value="8">8 hours</option><option value="24">24 hours</option></select></div></div>
+    <h3 data-ic="bell">Studio controls</h3><p>The CEO reads these before every run. Change them any time.</p>
+    <label class="chk tog"><input type="checkbox" id="sPaused"><span><span class="nm">Pause the studio</span><br><span class="rg">No agent starts any work until you turn this off.</span></span></label>
+    <div class="fgrid">
+      <div class="field"><label class="lbl" for="sApproval">Deliverables that need your approval</label><select id="sApproval"><option value="all">Every deliverable</option><option value="design_build">Design and build only</option><option value="none">None (the CEO decides)</option></select></div>
+      <div class="field"><label class="lbl" for="sMaxTasks">Max tasks per run</label><select id="sMaxTasks"><option value="1">1 (lightest on your plan)</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select></div>
+      <div class="field"><label class="lbl" for="sStall">Flag a silent task as stuck after</label><select id="sStall"><option value="1">1 hour</option><option value="2">2 hours</option><option value="4">4 hours</option><option value="8">8 hours</option><option value="24">24 hours</option></select></div></div>
+    <label class="chk tog"><input type="checkbox" id="sManual"><span><span class="nm">Manual control</span><br><span class="rg">Lets you change task status, agent, stage and order yourself. Off = the CEO manages tasks, and you answer, comment and approve. Emergencies only; every change is logged.</span></span></label>
     <button class="btn sm" id="sSaveStudio" type="button"></button><div class="formmsg" id="sMsgStudio" role="status"></div>
   </section>
   <section class="set-sec">
@@ -735,7 +747,7 @@ const ROLE={ceo:"CEO","product-manager":"Product Manager","ux-researcher":"UX Re
 const ROLE_IC={ceo:"crown","product-manager":"clipboard","ux-researcher":"search","senior-product-designer":"pen","ui-designer":"layout","front-end-dev":"code","back-end-dev":"server","database-engineer":"database","qa-accessibility":"shieldcheck",marketer:"megaphone","sales-bd":"handshake","content-writer":"type",prospector:"target","brand-designer":"palette",financer:"calc"};
 const LEVELS=["","Trainee","Associate","Junior","Specialist","Senior","Lead","Principal","Expert","Master","Legend"];
 const A_STATUS={idle:"Idle",working:"Working",waiting_on_you:"Waiting on you",waiting_on_room:"Waiting on a teammate",stuck:"Stuck",meeting:"In a meeting"};
-const T_STATUS={todo:"To do",working:"Working",review:"In review",needs_you:"Needs you",done:"Done",stuck:"Stuck"};
+const T_STATUS={todo:"To do",working:"Working",review:"Waiting for your review",needs_you:"Needs you",done:"Done",stuck:"Stuck"};
 const P_STATUS={draft:"Draft",requested:"Sent to studio",queued:"Queued",in_progress:"In progress",review:"In review",needs_you:"Needs you",done:"Done",on_hold:"On hold"};
 const STAGES=[{k:'lead',l:'Lead',p:.1},{k:'qualified',l:'Qualified',p:.3},{k:'proposal',l:'Proposal',p:.6},{k:'won',l:'Won',p:1},{k:'lost',l:'Lost',p:0}];
 const Q_STATUS={pending:"Pending",sent:"Sent",accepted:"Accepted",declined:"Declined"};
@@ -762,12 +774,14 @@ function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 /* projects + tasks helpers */
 const isActive=p=>!p.archived_at&&!['done','on_hold','draft'].includes(p.status);
-const stallH=()=>Number((USER&&USER.stall)||2);
+const SET=k=>S.settings&&S.settings[k]!==undefined?S.settings[k]:({paused:false,approval:'all',max_tasks_per_run:2,stall_hours:2})[k];
+const MANUAL=()=>!!(USER&&USER.manual);
+const stallH=()=>Number(SET('stall_hours')||(USER&&USER.stall)||2);
 const sinceTxt=t=>{const m=Math.round((Date.now()-new Date(t))/60000);return m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d';};
 /* effective state: a Working task with no update for stallH() hours counts as stuck */
 function tState(t){if(t.status==='working'&&Date.now()-new Date(t.updated_at)>stallH()*3600e3)return 'stalled';return t.status||'todo';}
 function tLabel(t){const s=tState(t);return s==='stalled'?'Stuck · no update for '+sinceTxt(t.updated_at):T_STATUS[s]||s;}
-function blockedTasks(){const live=S.projects.filter(p=>!p.archived_at).map(p=>p.id);return S.tasks.filter(t=>live.includes(t.project_id)&&['stuck','stalled','needs_you'].includes(tState(t)));}
+function blockedTasks(){const live=S.projects.filter(p=>!p.archived_at).map(p=>p.id);return S.tasks.filter(t=>live.includes(t.project_id)&&['stuck','stalled','needs_you','review'].includes(tState(t)));}
 const tasksOf=pid=>S.tasks.filter(t=>t.project_id===pid).sort((a,b)=>(a.sort-b.sort)||String(a.created_at).localeCompare(String(b.created_at))||(a.id-b.id));
 const T_STAGES=['Brief','Discovery','Strategy','Design','Data','Build','QA','Review'];
 const taskNo=t=>tasksOf(t.project_id).findIndex(x=>x.id===t.id)+1;
@@ -809,18 +823,19 @@ async function load(force){
       db.from('quotes').select('*').order('created_at',{ascending:false}),db.from('needs').select('*').eq('resolved',false).order('created_at'),
       db.from('events').select('*').order('created_at',{ascending:false}).limit(15),
       db.from('tasks').select('*').order('sort').order('created_at'),
-      db.from('task_comments').select('*').order('created_at')]);
+      db.from('task_comments').select('*').order('created_at'),
+      db.from('studio_settings').select('*')]);
     if(r[0].error) throw r[0].error;
-    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[]),comments:r[8].error?[]:(r[8].data||[])};
+    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[]),comments:r[8].error?[]:(r[8].data||[]),settings:r[9].error?null:Object.fromEntries((r[9].data||[]).map(x=>[x.key,x.value]))};
     TASKS_OK=!r[7].error;
     if(seq!==LOADSEQ)return;
     lastSync=Date.now();tickSync();
     const sig=JSON.stringify(next)+'|'+Math.floor(Date.now()/60000);
     if(!force&&sig===lastSig)return;
-    lastSig=sig;S=next;renderAll();firstPaint=false;
+    lastSig=sig;S=next;renderAll();tickSync();firstPaint=false;
   }catch(e){console.error(e);setConn(false,'Connection lost');}
 }
-function tickSync(){if(!lastSync)return;const s=Math.round((Date.now()-lastSync)/1000);setConn(true,'Live · synced '+(s<5?'now':s+'s ago'));}
+function tickSync(){if(!lastSync)return;const s=Math.round((Date.now()-lastSync)/1000);setConn(true,(SET('paused')?'Studio paused · ':'Live · ')+'synced '+(s<5?'now':s+'s ago'));$('conn').classList.toggle('paused',!!SET('paused'));}
 setInterval(tickSync,5000);
 function renderAll(){
   document.body.classList.toggle('alive',S.agents.some(a=>a.status==='working'));
@@ -879,7 +894,7 @@ function renderOverview(){
   $('needsN').textContent=total?total+' item'+(total>1?'s':''):'';
   const ul=$('needsList');ul.innerHTML='';
   blk.forEach(t=>{const p=S.projects.find(x=>x.id===t.project_id)||{},li=document.createElement('li'),st=tState(t);
-    li.innerHTML=`<span class="src" style="color:${st==='needs_you'?'var(--amber)':'var(--red)'}">${st==='needs_you'?'Needs you':'Stuck'}</span><span class="txt"><b>${esc(t.title)}</b> · ${esc(p.name||'')}${t.agent?' · '+esc(agentName(t.agent)):''}${t.stuck_reason?' — '+esc(t.stuck_reason):st==='stalled'?' — no update for '+sinceTxt(t.updated_at):''}</span>`;
+    li.innerHTML=`<span class="src" style="color:${st==='needs_you'?'var(--amber)':st==='review'?'var(--accent)':'var(--red)'}">${st==='needs_you'?'Needs you':st==='review'?'To review':'Stuck'}</span><span class="txt"><b>${esc(t.title)}</b> · ${esc(p.name||'')}${t.agent?' · '+esc(agentName(t.agent)):''}${st==='review'?' — ready for your approval':t.stuck_reason?' — '+esc(t.stuck_reason):st==='stalled'?' — no update for '+sinceTxt(t.updated_at):''}</span>`;
     const b=document.createElement('button');b.className='btn sec sm';b.innerHTML=btnHtml('arrow','Open');b.onclick=()=>{PTAB='tasks';openProject(p);};li.appendChild(b);ul.appendChild(li);});
   if(!total){ul.innerHTML=`<li class="empty" style="border:0;background:none;padding:0">${ic('check')} Nothing needs you right now. The team will flag anything that does.</li>`;}
   else S.needs.forEach(nd=>{const li=document.createElement('li');li.innerHTML=`<span class="src">${esc(nd.source)}</span><span class="txt">${esc(nd.body)}</span>`;
@@ -1157,16 +1172,16 @@ function renderPPanel(){const p=curP(),box=$('pPanel');if(!p||!box)return;
     ${pros?`<div class="d-grid"><div class="d-box"><div class="k">Area</div><div class="v">${esc(loc)}</div></div><div class="d-box"><div class="k">Prospects found</div><div class="v">${nP}</div></div></div><div class="d-sec">Categories</div><div class="d-note">${esc((p.categories||[]).map(c=>CAT_LABEL[c]||c).join(', ')||'—')}</div>`:''}
     ${p.client||p.value?`<div class="d-grid"><div class="d-box"><div class="k">Client</div><div class="v">${esc(p.client||'—')}</div></div><div class="d-box"><div class="k">Value</div><div class="v">${p.value?fmt(p.value)+' '+esc(p.currency||''):'—'}</div></div></div>`:''}
     ${p.status==='draft'||p.archived_at?'':`<div class="d-sec">Update</div>
-    <div class="fgrid"><div class="field"><label class="lbl" for="dStatus">Status</label><select id="dStatus">${stOpts}</select></div>
+    <div class="fgrid">${MANUAL()?`<div class="field"><label class="lbl" for="dStatus">Status</label><select id="dStatus">${stOpts}</select></div>`:''}
       <div class="field"><label class="lbl" for="dDue">Due</label><input type="date" id="dDue" value="${esc(p.due||'')}"></div></div>
     <button class="btn sm" id="dSave">${btnHtml('save','Save')}</button>`}
     <div class="d-sec">Files</div><div id="dFiles" class="d-note">Loading…</div>
     ${p.archived_at?`<div class="d-sec" style="color:var(--red)">Danger zone</div><div class="dz"><p>Permanently deletes <b>${esc(p.name)}</b>, its tasks, files, timeline and prospects. This can't be undone. Type the project name to confirm.</p>
       <div class="field"><label class="lbl" for="dzName">Project name</label><input type="text" id="dzName" autocomplete="off" spellcheck="false"></div>
       <button class="btn danger sm" id="dzBtn" disabled>${btnHtml('trash','Delete this project permanently')}</button><div class="formmsg" id="dzMsg" role="status"></div></div>`:''}`;
-  if($('dSave'))$('dSave').onclick=async()=>{const row={status:$('dStatus').value,due:$('dDue').value||null,updated_at:new Date().toISOString()};
+  if($('dSave'))$('dSave').onclick=async()=>{const row={due:$('dDue').value||null,updated_at:new Date().toISOString()};if($('dStatus'))row.status=$('dStatus').value;
     const {error}=await db.from('projects').update(row).eq('id',p.id);if(error){toast("Couldn't save: "+error.message,'err');return;}
-    await logEvent('project_update',`Status: ${P_STATUS[row.status]}`,p.id);toast('Project updated','ok');load(true);};
+    await logEvent('project_update',row.status?`Manual: status ${P_STATUS[row.status]}`:`Due date: ${row.due||'none'}`,p.id);toast('Project updated','ok');load(true);};
   if($('dzName')){const inp=$('dzName'),btn=$('dzBtn');inp.oninput=()=>{btn.disabled=inp.value!==p.name;};btn.onclick=()=>deleteProject(p,inp.value,btn);}
   loadFiles(p);
 }
@@ -1214,8 +1229,9 @@ function outHtml(t){const u=t.output_url||'';if(!u)return'';
 function renderPTasks(p,box){
   if(!TASKS_OK){box.innerHTML=`<div class="d-note" style="margin-top:14px">Tasks need the database update (build5.sql). Run it in Supabase, then refresh.</div>`;return;}
   const ts=tasksOf(p.id);
-  box.innerHTML=`<p class="d-note" style="margin-top:14px;font-size:.84rem">Tasks run in this order. Agents update them while they work. You can add tasks, move them, and comment on any task at any time.</p><div id="tList"></div>
-    ${p.archived_at?'':`<div class="d-sec">Add a task</div><form class="addtask" id="tAdd" style="grid-template-columns:1fr auto auto auto"><input type="text" id="tTitle" placeholder="e.g. Booking flow wireframes" aria-label="Task title" required>
+  const man=MANUAL()&&!p.archived_at;
+  box.innerHTML=`<p class="d-note" style="margin-top:14px;font-size:.84rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment on any task (for example "assign this to…"), and approve deliverables.'}</p><div id="tList"></div>
+    ${!man?'':`<div class="d-sec">Add a task</div><form class="addtask" id="tAdd" style="grid-template-columns:1fr auto auto auto"><input type="text" id="tTitle" placeholder="e.g. Booking flow wireframes" aria-label="Task title" required>
       <select id="tStage" aria-label="Stage">${T_STAGES.map(x=>`<option>${x}</option>`).join('')}</select><select id="tAgent" aria-label="Assign to">${agentOpts('')}</select><button class="btn sm" type="submit">${btnHtml('plus','Add')}</button></form>`}`;
   const list=$('tList');
   if(!ts.length)list.innerHTML=`<p class="d-note">No tasks yet.${p.status==='draft'?' This is a draft, so the studio won\'t start it until you send it.':' The CEO breaks the brief into tasks when it picks the project up.'}</p>`;
@@ -1225,11 +1241,14 @@ function renderPTasks(p,box){
       ${asking?`<div class="ask"><div class="h">${ic('bell','sm')} Needs your answer</div><div class="q">${esc(t.stuck_reason||'The agent needs something from you. See the comments.')}</div></div>`
         :t.stuck_reason?`<div class="why"><b>Why it's stuck:</b> ${esc(t.stuck_reason)}</div>`:st==='stalled'?`<div class="why"><b>No update since ${esc(fmtTime(t.updated_at))}.</b> The agent stopped reporting. It may have crashed, your Mac may be asleep, or credits ran out.</div>`:''}
       ${outHtml(t)}
+      ${t.status==='review'&&!p.archived_at?`<div class="rev"><div class="h">${ic('check','sm')} Ready for your review</div>
+        <div class="acts"><button class="btn sm" data-approve>${btnHtml('check','Approve')}</button><button class="btn sec sm" data-changes>${btnHtml('edit','Request changes')}</button></div>
+        <form data-cform2 hidden><label class="sr" for="rq${t.id}">What should change?</label><textarea id="rq${t.id}" placeholder="What should change, and why? Your note becomes a lesson for the agent."></textarea><div style="margin-top:8px"><button class="btn sm" type="submit">${btnHtml('send','Send to the team')}</button></div></form></div>`:''}
       <details class="thread"${asking||cs.length?' open':''}><summary>${ic('message','sm')} ${asking?'Answer':'Comments'}${cs.length?' ('+cs.length+')':''}</summary>
         ${cs.map(c=>`<div class="cm${c.author==='founder'?' me':''}"><div class="who">${esc(c.author==='founder'?'You':agentName(c.author))} · ${esc(fmtTime(c.created_at))}</div><div class="bd">${esc(c.body)}</div></div>`).join('')}
         <form class="cform" data-cform><label class="sr" for="cm${t.id}">${asking?'Your answer':'Comment'}</label><textarea id="cm${t.id}" placeholder="${asking?'Type your answers here…':'Add a note for the team…'}"></textarea>
           <div><button class="btn sm" type="submit">${btnHtml('send',asking?'Send answer':'Add comment')}</button></div></form></details>
-      ${p.archived_at?'':`<div class="tc"><label class="sr" for="ts${t.id}">Status</label><select id="ts${t.id}">${Object.keys(T_STATUS).map(k=>`<option value="${k}"${k===t.status?' selected':''}>${T_STATUS[k]}</option>`).join('')}</select>
+      ${!man?'':`<div class="tc"><label class="sr" for="ts${t.id}">Status</label><select id="ts${t.id}">${Object.keys(T_STATUS).map(k=>`<option value="${k}"${k===t.status?' selected':''}>${T_STATUS[k]}</option>`).join('')}</select>
         <select aria-label="Stage" data-stg><option value="">No stage</option>${T_STAGES.map(x=>`<option${x===t.stage?' selected':''}>${x}</option>`).join('')}</select>
         <select aria-label="Assigned agent" data-ag>${agentOpts(t.agent)}</select>
         <button class="btn sec sm" data-up aria-label="Move task ${ix+1} up"${ix?'':' disabled'}>↑</button><button class="btn sec sm" data-dn aria-label="Move task ${ix+1} down"${ix<ts.length-1?'':' disabled'}>↓</button>
@@ -1240,9 +1259,18 @@ function renderPTasks(p,box){
       const r=await db.from('task_comments').insert({task_id:t.id,project_id:p.id,author:'founder',body});if(r.error){toast("Couldn't send: "+r.error.message,'err');return;}
       if(asking){await db.from('tasks').update({status:'todo'}).eq('id',t.id);await logEvent('answered','You answered: '+t.title,p.id);toast('Answer sent. The CEO picks it up on the next run.','ok');}
       else{await logEvent('comment','Comment on #'+(ix+1)+' '+t.title,p.id);toast('Comment added','ok');}ta.value='';ta.blur();load(true);};
-    if(!p.archived_at){const sel=d.querySelector('#ts'+t.id),why=d.querySelector('[data-why]');
+    const ap=d.querySelector('[data-approve]');if(ap){const rf=d.querySelector('[data-cform2]');
+      ap.onclick=async()=>{ap.disabled=true;await db.from('task_comments').insert({task_id:t.id,project_id:p.id,author:'founder',body:'Approved.'});
+        const r=await db.from('tasks').update({status:'done'}).eq('id',t.id);if(r.error){ap.disabled=false;toast("Couldn't approve: "+r.error.message,'err');return;}
+        await logEvent('approved','You approved #'+(ix+1)+' '+t.title,p.id);toast('Approved','ok');load(true);};
+      d.querySelector('[data-changes]').onclick=()=>{rf.hidden=false;rf.querySelector('textarea').focus();};
+      rf.onsubmit=async e=>{e.preventDefault();const ta=rf.querySelector('textarea'),note=ta.value.trim();if(!note){ta.focus();return;}
+        await db.from('task_comments').insert({task_id:t.id,project_id:p.id,author:'founder',body:'Changes requested: '+note});
+        const r=await db.from('tasks').update({status:'todo'}).eq('id',t.id);if(r.error){toast("Couldn't send: "+r.error.message,'err');return;}
+        await logEvent('changes_requested','You requested changes on #'+(ix+1)+' '+t.title+': '+note,p.id);ta.blur();toast('Sent. The agent redoes it on the next run, and your note becomes a lesson.','ok');load(true);};}
+    if(man){const sel=d.querySelector('#ts'+t.id),why=d.querySelector('[data-why]');
       sel.onchange=()=>{if(sel.value==='done'&&asking&&!cs.some(c=>c.author==='founder')){if(!confirm('This task is waiting for your answer and you haven\'t answered yet. Mark it done anyway?')){sel.value=t.status;return;}}
-        if(['stuck','needs_you'].includes(sel.value)){why.hidden=false;why.querySelector('input').focus();}else{why.hidden=true;taskPatch(t,{status:sel.value},`#${ix+1} ${t.title} → ${T_STATUS[sel.value]}`);}};
+        if(['stuck','needs_you'].includes(sel.value)){why.hidden=false;why.querySelector('input').focus();}else{why.hidden=true;taskPatch(t,{status:sel.value},`Manual: #${ix+1} ${t.title} → ${T_STATUS[sel.value]}`);}};
       why.querySelector('[data-ok]').onclick=()=>{const r=why.querySelector('input').value.trim();if(!r){why.querySelector('input').focus();return;}taskPatch(t,{status:sel.value,stuck_reason:r},`#${ix+1} ${t.title} → ${T_STATUS[sel.value]}: ${r}`);};
       d.querySelector('[data-ag]').onchange=e=>taskPatch(t,{agent:e.target.value||null},`#${ix+1} ${t.title} assigned to ${e.target.value?agentName(e.target.value):'nobody'}`);
       d.querySelector('[data-stg]').onchange=e=>taskPatch(t,{stage:e.target.value||null},`#${ix+1} ${t.title} stage → ${e.target.value||'none'}`);
@@ -1335,12 +1363,12 @@ $('umenu').addEventListener('keydown',e=>{const items=[...$('umenu').querySelect
   if(e.key==='ArrowDown'){e.preventDefault();items[(i+1)%items.length].focus();}if(e.key==='ArrowUp'){e.preventDefault();items[(i-1+items.length)%items.length].focus();}});
 document.querySelectorAll('[data-set]').forEach(b=>b.addEventListener('click',()=>{closeMenu();openSettings(b.dataset.set);}));
 function applyUser(u){
-  const md=(u&&u.user_metadata)||{};USER={email:u&&u.email||'',name:md.full_name||'Idris Hedhibi',title:md.title||'Founder',stall:md.stall_hours||2};
+  const md=(u&&u.user_metadata)||{};USER={email:u&&u.email||'',name:md.full_name||'Idris Hedhibi',title:md.title||'Founder',stall:md.stall_hours||2,manual:!!md.manual_control};
   $('uName').textContent=USER.name;$('uTitle').textContent=USER.title;$('uav').textContent=initials(USER.name);$('mName').textContent=USER.name;$('mEmail').textContent=USER.email;
   $('ubtn').setAttribute('aria-label',`${USER.name}, ${USER.title}. Account menu`);
 }
 function openSettings(section){
-  $('sName').value=USER.name;$('sTitle').value=USER.title;$('sStall').value=String(USER.stall||2);$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
+  $('sName').value=USER.name;$('sTitle').value=USER.title;$('sStall').value=String(stallH());$('sPaused').checked=!!SET('paused');$('sApproval').value=SET('approval');$('sMaxTasks').value=String(SET('max_tasks_per_run'));$('sManual').checked=MANUAL();$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
   $('sEmail').value='';$('sPass').value='';$('sPass2').value='';['sMsgProfile','sMsgEmail','sMsgPass'].forEach(id=>{$(id).textContent='';$(id).className='formmsg';});
   openModal('sModal',section==='email'?'sEmail':section==='password'?'sPass':'sName');
   const sec=$('set-'+(section||'profile'));if(sec)setTimeout(()=>sec.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'}),80);
@@ -1353,7 +1381,13 @@ $('sSaveEmail').onclick=async()=>{const email=$('sEmail').value.trim();if(!email
   sMsg('sMsgEmail','Check '+email+' (and your current inbox) for a confirmation link. Your login stays the same until you confirm.','ok');};
 $('sSavePass').onclick=async()=>{const a=$('sPass').value,b=$('sPass2').value;if(a.length<8)return sMsg('sMsgPass','Use at least 8 characters.','err');if(a!==b)return sMsg('sMsgPass',"The two passwords don't match.",'err');
   const {error}=await db.auth.updateUser({password:a});if(error)return sMsg('sMsgPass',"Couldn't update: "+error.message,'err');$('sPass').value='';$('sPass2').value='';sMsg('sMsgPass','Password updated.','ok');};
-$('sSaveStudio').onclick=async()=>{const h=Number($('sStall').value)||2;const {data,error}=await db.auth.updateUser({data:{stall_hours:h}});if(error)return sMsg('sMsgStudio',"Couldn't save: "+error.message,'err');applyUser(data.user);renderAll();sMsg('sMsgStudio','Saved. Tasks are flagged after '+h+' hour'+(h>1?'s':'')+' without an update.','ok');};
+$('sSaveStudio').onclick=async()=>{const vals={paused:$('sPaused').checked,approval:$('sApproval').value,max_tasks_per_run:Number($('sMaxTasks').value),stall_hours:Number($('sStall').value)};
+  if(!S.settings)return sMsg('sMsgStudio','Studio controls need the database update (build 10). Run it in Supabase first.','err');
+  for(const [key,value] of Object.entries(vals)){const r=await db.from('studio_settings').upsert({key,value,updated_at:new Date().toISOString()});if(r.error)return sMsg('sMsgStudio',"Couldn't save: "+r.error.message,'err');}
+  const changed=Object.keys(vals).filter(k=>JSON.stringify(vals[k])!==JSON.stringify(SET(k)));
+  const u=await db.auth.updateUser({data:{manual_control:$('sManual').checked}});if(u.error)return sMsg('sMsgStudio',"Couldn't save: "+u.error.message,'err');applyUser(u.data.user);
+  if(changed.length)await logEvent('settings','Studio controls changed: '+changed.map(k=>k+' → '+JSON.stringify(vals[k])).join(', '));
+  sMsg('sMsgStudio','Saved.'+(vals.paused?' The studio is paused.':''),'ok');load(true);};
 $('sOutAll').onclick=async()=>{const b=$('sOutAll');if(!b.dataset.c){b.dataset.c='1';b.innerHTML=btnHtml('logout','Tap again to sign out everywhere');setTimeout(()=>{b.dataset.c='';b.innerHTML=btnHtml('logout','Sign out everywhere');},3000);return;}
   await db.auth.signOut({scope:'global'});closeModals();showLogin();};
 
