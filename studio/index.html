@@ -338,6 +338,9 @@
   .compose .ch .ic{color:var(--accent)}
   .compose textarea{flex:1;min-height:76px}
   .compose .cf{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .mthread{display:flex;flex-direction:column;gap:8px;max-height:260px;overflow-y:auto;margin:4px 0 2px}
+  .mthread:empty{display:none}
+  .mthread .cm{margin:0}
   .compose .hint{font-size:.8rem;color:var(--subtle);flex:1;min-width:150px}
 
   /* ---------- list items ---------- */
@@ -577,7 +580,8 @@
     <div class="org-top">
       <div id="ceoSlot"></div>
       <div class="compose">
-        <div class="ch" data-ic="message"><label for="msg">Message the CEO</label></div>
+        <div class="ch" data-ic="message"><label for="msg">Message the CEO</label><span class="meta" id="runState" style="margin-inline-start:auto"></span></div>
+        <div class="mthread" id="mThread" aria-live="polite"></div>
         <textarea id="msg" placeholder="Ask for a status or give an instruction. For real work, start a new project."></textarea>
         <div class="cf"><span class="hint" id="sendHint">Read on the CEO's next check.</span><button class="btn" id="send" type="button"></button></div>
       </div>
@@ -749,6 +753,10 @@
     <div class="fgrid">
       <div class="field"><label class="lbl" for="sApproval">Deliverables that need your approval</label><select id="sApproval"><option value="all">Every deliverable</option><option value="design_build">Design and build only</option><option value="none">None (the CEO decides)</option></select></div>
       <div class="field"><label class="lbl" for="sMaxTasks">Max tasks per run</label><select id="sMaxTasks"><option value="1">1 (lightest on your plan)</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select></div>
+      <div class="field"><label class="lbl" for="sHoursS">Studio works from</label><select id="sHoursS"></select></div>
+      <div class="field"><label class="lbl" for="sHoursE">until</label><select id="sHoursE"></select></div>
+      <div class="field"><label class="lbl" for="sCheck">Check the board every</label><select id="sCheck"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
+      <div class="field"><label class="lbl" for="sMaxRun">Stop a run after</label><select id="sMaxRun"><option value="60">1 hour</option><option value="120">2 hours</option><option value="180">3 hours</option></select></div>
       <div class="field"><label class="lbl" for="sStall">Flag a silent task as stuck after</label><select id="sStall"><option value="1">1 hour</option><option value="2">2 hours</option><option value="4">4 hours</option><option value="8">8 hours</option><option value="24">24 hours</option></select></div></div>
     <label class="chk tog"><input type="checkbox" id="sManual"><span><span class="nm">Manual control</span><br><span class="rg">Lets you change task status, agent, stage and order yourself. Off = the CEO manages tasks, and you answer, comment and approve. Emergencies only; every change is logged.</span></span></label>
     <button class="btn sm" id="sSaveStudio" type="button"></button><div class="formmsg" id="sMsgStudio" role="status"></div>
@@ -852,7 +860,7 @@ function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 /* projects + tasks helpers */
 const isActive=p=>!p.archived_at&&!['done','on_hold','draft'].includes(p.status);
-const SET=k=>S.settings&&S.settings[k]!==undefined?S.settings[k]:({paused:false,approval:'all',max_tasks_per_run:2,stall_hours:2})[k];
+const SET=k=>S.settings&&S.settings[k]!==undefined?S.settings[k]:({paused:false,approval:'all',max_tasks_per_run:2,stall_hours:2,hours_start:0,hours_end:24,check_minutes:10,max_run_minutes:120})[k];
 const MANUAL=()=>!!(USER&&USER.manual);
 const stallH=()=>Number(SET('stall_hours')||(USER&&USER.stall)||2);
 const sinceTxt=t=>{const m=Math.round((Date.now()-new Date(t))/60000);return m<60?m+' min':m<1440?Math.round(m/60)+' h':Math.round(m/1440)+' d';};
@@ -885,7 +893,7 @@ function staticLabels(){
 }
 staticLabels();
 
-let S={agents:[],projects:[],prospects:[],leads:[],quotes:[],needs:[],events:[],tasks:[],comments:[]};
+let S={agents:[],projects:[],prospects:[],leads:[],quotes:[],needs:[],events:[],tasks:[],comments:[],messages:[]};
 let lastSig='',tab=lsGet('ts_tab')||'overview',lastSync=0,firstPaint=true,USER=null;
 const F={pipe:'open',proj:'all',pros:'new',arch:false};let TASKS_OK=true,OPEN_PID=null,PTAB='overview';
 
@@ -902,9 +910,10 @@ async function load(force){
       db.from('events').select('*').order('created_at',{ascending:false}).limit(15),
       db.from('tasks').select('*').order('sort').order('created_at'),
       db.from('task_comments').select('*').order('created_at'),
-      db.from('studio_settings').select('*')]);
+      db.from('studio_settings').select('*'),
+      db.from('messages').select('*').order('created_at',{ascending:false}).limit(30)]);
     if(r[0].error) throw r[0].error;
-    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[]),comments:r[8].error?[]:(r[8].data||[]),settings:r[9].error?null:Object.fromEntries((r[9].data||[]).map(x=>[x.key,x.value]))};
+    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[]),comments:r[8].error?[]:(r[8].data||[]),settings:r[9].error?null:Object.fromEntries((r[9].data||[]).map(x=>[x.key,x.value])),messages:r[10].error?[]:(r[10].data||[]).slice().sort((x,y)=>String(x.created_at).localeCompare(String(y.created_at)))};
     TASKS_OK=!r[7].error;
     if(seq!==LOADSEQ)return;
     lastSync=Date.now();tickSync();
@@ -916,9 +925,16 @@ async function load(force){
 }
 function tickSync(){if(!lastSync)return;const s=Math.round((Date.now()-lastSync)/1000);setConn(true,(SET('paused')?'Studio paused · ':'Live · ')+'synced '+(s<5?'now':s+'s ago'));$('conn').classList.toggle('paused',!!SET('paused'));}
 setInterval(tickSync,5000);
+function runnerState(){const hb=SET('runner_heartbeat');if(!hb||!hb.at)return {on:false,txt:'Studio runner not set up yet'};
+  const m=Math.round((Date.now()-new Date(hb.at))/60000);
+  return m<=15?{on:true,txt:'Studio runner online · checked '+(m<1?'just now':m+' min ago')}:{on:false,txt:'Studio runner offline since '+fmtTime(hb.at)+' (Mac asleep or off?)'};}
+function renderThread(){const box=$('mThread');if(!box)return;const r=runnerState();$('runState').innerHTML=`<span style="color:${r.on?'var(--green)':'var(--amber)'}">●</span> ${esc(r.txt)}`;
+  const a=document.activeElement;if(a&&a.id==='msg')return;
+  box.innerHTML=S.messages.map(m=>`<div class="cm${m.sender==='founder'?' me':''}"><div class="who">${esc(m.sender==='founder'?'You':agentName(m.sender))} · ${esc(fmtTime(m.created_at))}</div><div class="bd">${esc(m.body)}</div></div>`).join('');
+  box.scrollTop=box.scrollHeight;}
 function renderAll(){
   document.body.classList.toggle('alive',S.agents.some(a=>a.status==='working'));
-  renderCounts();renderHello();renderOverview();renderFloor();renderPipeline();renderQuotes();renderProjects();renderProspects();refreshProjectDrawer();
+  renderCounts();renderHello();renderOverview();renderFloor();renderPipeline();renderQuotes();renderProjects();renderProspects();renderThread();refreshProjectDrawer();
 }
 function renderCounts(){
   const openLeads=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost').length,qOut=S.quotes.filter(q=>q.status==='pending'||q.status==='sent').length,
@@ -934,7 +950,7 @@ function renderHello(){
   const working=S.agents.filter(a=>a.status==='working').length,needs=S.needs.length+blockedTasks().length,open=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost').length,act=S.projects.filter(isActive).length;
   const bits=[];bits.push(needs?`${needs} thing${needs>1?'s':''} need${needs>1?'':'s'} you`:'Nothing needs you right now');
   bits.push(working?`${working} agent${working>1?'s':''} working`:'the team is idle');bits.push(`${act} active project${act===1?'':'s'}`);bits.push(`${open} open lead${open===1?'':'s'}`);
-  $('summary').textContent=bits.join(' · ')+'.';
+  $('summary').textContent=bits.join(' · ')+'.';const rs=runnerState();$('summary').insertAdjacentHTML('beforeend',`<br><span class="meta"><span style="color:${rs.on?'var(--green)':'var(--amber)'}">●</span> ${esc(rs.txt)}</span>`);
   try{$('when').textContent=new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Tunis',weekday:'long',day:'numeric',month:'long'})+' · '+new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Tunis',hour:'2-digit',minute:'2-digit'})+' Tunis';}catch(e){}
 }
 setInterval(()=>{if(!$('app').hidden)renderHello();},30000);
@@ -1030,7 +1046,7 @@ addEventListener('resize',sizeFlow);
 $('send').addEventListener('click',async()=>{const body=$('msg').value.trim();if(!body){$('msg').focus();return;}$('send').disabled=true;
   const {error}=await db.from('messages').insert({sender:'founder',body});$('send').disabled=false;
   if(error){$('sendHint').textContent="Couldn't send: "+error.message;return;}
-  $('msg').value='';$('sendHint').textContent='Sent. The CEO reads it on the next check.';toast('Message sent to the CEO','ok');});
+  $('msg').value='';$('sendHint').textContent='Sent. The CEO answers on the next run.';toast('Message sent to the CEO','ok');load(true);});
 
 /* ---------- pipeline ---------- */
 function renderPipeline(){
@@ -1495,7 +1511,7 @@ function applyUser(u){
   $('ubtn').setAttribute('aria-label',`${USER.name}, ${USER.title}. Account menu`);
 }
 function openSettings(section){
-  $('sName').value=USER.name;$('sTitle').value=USER.title;$('sStall').value=String(stallH());$('sPaused').checked=!!SET('paused');$('sApproval').value=SET('approval');$('sMaxTasks').value=String(SET('max_tasks_per_run'));$('sManual').checked=MANUAL();$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
+  $('sName').value=USER.name;$('sTitle').value=USER.title;const hrs=[...Array(25).keys()].map(h=>`<option value="${h}">${h===24?'24:00 (midnight)':String(h).padStart(2,'0')+':00'}</option>`).join('');$('sHoursS').innerHTML=hrs;$('sHoursE').innerHTML=hrs;$('sHoursS').value=String(SET('hours_start'));$('sHoursE').value=String(SET('hours_end'));$('sCheck').value=String(SET('check_minutes'));$('sMaxRun').value=String(SET('max_run_minutes'));$('sStall').value=String(stallH());$('sPaused').checked=!!SET('paused');$('sApproval').value=SET('approval');$('sMaxTasks').value=String(SET('max_tasks_per_run'));$('sManual').checked=MANUAL();$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
   $('sEmail').value='';$('sPass').value='';$('sPass2').value='';['sMsgProfile','sMsgEmail','sMsgPass'].forEach(id=>{$(id).textContent='';$(id).className='formmsg';});
   openModal('sModal',section==='email'?'sEmail':section==='password'?'sPass':'sName');
   const sec=$('set-'+(section||'profile'));if(sec)setTimeout(()=>sec.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'}),80);
@@ -1508,7 +1524,7 @@ $('sSaveEmail').onclick=async()=>{const email=$('sEmail').value.trim();if(!email
   sMsg('sMsgEmail','Check '+email+' (and your current inbox) for a confirmation link. Your login stays the same until you confirm.','ok');};
 $('sSavePass').onclick=async()=>{const a=$('sPass').value,b=$('sPass2').value;if(a.length<8)return sMsg('sMsgPass','Use at least 8 characters.','err');if(a!==b)return sMsg('sMsgPass',"The two passwords don't match.",'err');
   const {error}=await db.auth.updateUser({password:a});if(error)return sMsg('sMsgPass',"Couldn't update: "+error.message,'err');$('sPass').value='';$('sPass2').value='';sMsg('sMsgPass','Password updated.','ok');};
-$('sSaveStudio').onclick=async()=>{const vals={paused:$('sPaused').checked,approval:$('sApproval').value,max_tasks_per_run:Number($('sMaxTasks').value),stall_hours:Number($('sStall').value)};
+$('sSaveStudio').onclick=async()=>{const vals={paused:$('sPaused').checked,approval:$('sApproval').value,max_tasks_per_run:Number($('sMaxTasks').value),stall_hours:Number($('sStall').value),hours_start:Number($('sHoursS').value),hours_end:Number($('sHoursE').value),check_minutes:Number($('sCheck').value),max_run_minutes:Number($('sMaxRun').value)};
   if(!S.settings)return sMsg('sMsgStudio','Studio controls need the database update (build 10). Run it in Supabase first.','err');
   for(const [key,value] of Object.entries(vals)){const r=await db.from('studio_settings').upsert({key,value,updated_at:new Date().toISOString()});if(r.error)return sMsg('sMsgStudio',"Couldn't save: "+r.error.message,'err');}
   const changed=Object.keys(vals).filter(k=>JSON.stringify(vals[k])!==JSON.stringify(SET(k)));
