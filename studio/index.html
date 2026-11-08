@@ -927,7 +927,9 @@ function tickSync(){if(!lastSync)return;const s=Math.round((Date.now()-lastSync)
 setInterval(tickSync,5000);
 function runnerState(){const hb=SET('runner_heartbeat');if(!hb||!hb.at)return {on:false,txt:'Studio runner not set up yet'};
   const m=Math.round((Date.now()-new Date(hb.at))/60000);
-  return m<=15?{on:true,txt:'Studio runner online · checked '+(m<1?'just now':m+' min ago')}:{on:false,txt:'Studio runner offline since '+fmtTime(hb.at)+' (Mac asleep or off?)'};}
+  const st=String(hb.state||''),w=st.match(/^run\s+\d+\s+(.*)$/)||st.match(/^running:\s*(.*)$/);
+  const why=w?'Working · '+w[1]:/paused/.test(st)?'Paused':/outside studio hours/.test(st)?'Outside studio hours':/nothing changed/.test(st)?'Waiting on you (reviews or answers)':/nothing to do/.test(st)?'Idle · nothing to do':st.replace(/^skip:\s*/,'');
+  return m<=15?{on:true,txt:'Runner online · checked '+(m<1?'just now':m+' min ago')+(why?' · '+why:'')}:{on:false,txt:'Studio runner offline since '+fmtTime(hb.at)+' (Mac asleep or off?)'};}
 function renderThread(){const box=$('mThread');if(!box)return;const r=runnerState();$('runState').innerHTML=`<span style="color:${r.on?'var(--green)':'var(--amber)'}">●</span> ${esc(r.txt)}`;
   const a=document.activeElement;if(a&&a.id==='msg')return;
   box.innerHTML=S.messages.map(m=>`<div class="cm${m.sender==='founder'?' me':''}"><div class="who">${esc(m.sender==='founder'?'You':agentName(m.sender))} · ${esc(fmtTime(m.created_at))}</div><div class="bd">${esc(m.body)}</div></div>`).join('');
