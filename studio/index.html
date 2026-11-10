@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="Tekydis Studio">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../favicon.svg">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Teko:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
   /* Tekydis Studio — the internal "cave". Tokens from the TEKYDIS V1 design system (via tekydis.github.io). */
@@ -495,6 +495,123 @@
   @media (max-width:560px){.nlong{display:none}.brand{min-width:0;flex-shrink:1}.wm b{font-size:1.4rem}}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
+<style id="glass-theme">
+  /* ============================================================
+     TEKYDIS STUDIO — LIGHT GLASS THEME (Nov 2026)
+     Same app, same data, same behaviour. Only the look changes, matching tekydis.github.io:
+     white ground + frosted glass, navy ink, dark navy flat buttons (shadow on hover),
+     Outfit display, lime kept for "live" signals. Logo unchanged (Teko wordmark).
+     Single light world by choice: every colour is set explicitly.
+     ============================================================ */
+  :root{
+    --bg:#F7F9FD; --bg-deep:#EEF2FA; --elev:#FFFFFF; --elev-2:#FFFFFF; --field:#FFFFFF;
+    --fg:#0B1A2F; --muted:#43536B; --subtle:#56667E;
+    --accent:#294C7B; --accent-ink:#FFFFFF;
+    --line:rgba(41,76,123,.12); --line-strong:rgba(41,76,123,.22);
+    --amber:#A35A00; --cyan:#0E6E8C; --violet:#6D28D9; --red:#B4233A; --green:#167A3E;
+    --display:'Outfit','IBM Plex Sans',system-ui,sans-serif;
+    --glass:linear-gradient(155deg,rgba(255,255,255,.94),rgba(238,243,252,.78));
+    --glass-shadow:inset 0 1px 0 #fff,0 10px 30px rgba(41,76,123,.08);
+    --ink-btn:#071425; --ink-btn-hover:#0E2038;
+    --live:#A5C23D; --live-glow:rgba(215,253,83,.55);
+    color-scheme:light;
+  }
+  body{background:radial-gradient(1100px 600px at 88% -8%,#DDE5F9 0%,rgba(221,229,249,0) 62%),radial-gradient(800px 520px at -10% 40%,#EEF2FB 0%,rgba(238,242,251,0) 60%),#F7F9FD;color:var(--fg)}
+  body::after{background:none}
+  .glow{background:radial-gradient(circle,rgba(118,161,232,.22),transparent 62%)}
+  body::before{background:#F7F9FD}
+  ::selection{background:#D7FD53;color:#0B1A2F}
+  :focus-visible{outline-color:#4376BA}
+  a{color:#294C7B}
+
+  /* logo exactly as the brand */
+  .wm b{font-family:'Teko',"Arial Narrow",sans-serif;color:#0B1A2F}
+  .mark rect{fill:#122641;stroke:rgba(173,196,236,.26)}
+  .mark circle,.mark .ring{stroke:#D7FD53}
+  .mark circle[fill]:not([fill="none"]){fill:#D7FD53}
+
+  /* header: glass bar */
+  header.top{background:linear-gradient(135deg,rgba(255,255,255,.72),rgba(255,255,255,.45));border-bottom-color:rgba(255,255,255,.9);
+    box-shadow:0 8px 30px rgba(41,76,123,.08);backdrop-filter:blur(22px) saturate(180%);-webkit-backdrop-filter:blur(22px) saturate(180%)}
+  .hpill{background:rgba(255,255,255,.8)}
+  .hpill.ok .dot{background:var(--live);animation:none;box-shadow:0 0 0 4px var(--live-glow)}
+  .hpill.warn{color:#7A4300;border-color:rgba(163,90,0,.35);background:#FFF6E5}
+  .ubtn{background:rgba(255,255,255,.85)} .ubtn:hover,.ubtn[aria-expanded="true"]{border-color:#294C7B}
+  .uav{background:#071425;color:#fff}
+
+  /* buttons: dark navy, flat; shadow only on hover */
+  .btn{background:var(--ink-btn);color:#fff;box-shadow:none}
+  .btn:hover{background:var(--ink-btn-hover);transform:translateY(-1px);box-shadow:0 10px 24px rgba(7,20,37,.24)}
+  .btn.sec{background:rgba(255,255,255,.85);color:var(--fg);border-color:var(--line-strong)}
+  .btn.sec:hover{background:#fff;border-color:#294C7B;color:#294C7B;box-shadow:0 8px 20px rgba(41,76,123,.12)}
+  .btn.danger{background:#fff;color:var(--red);border-color:rgba(180,35,58,.35)}
+  .btn.danger:hover{background:#FDF1F3;box-shadow:none}
+
+  /* tabs and segmented controls: glass pill */
+  .tabs,.segc{background:rgba(255,255,255,.7);border-color:rgba(41,76,123,.12);backdrop-filter:blur(12px)}
+  .tab[aria-selected="true"]{background:#071425;color:#fff;box-shadow:none}
+  .tab[aria-selected="true"] .ic{color:#D7FD53}
+  .tab .n{background:#D7FD53;color:#0B1A2F}
+
+  /* surfaces: glass cards */
+  .card,.task2{background:var(--glass);border-color:rgba(41,76,123,.10);box-shadow:var(--glass-shadow)}
+  .acard{background:var(--glass);border-color:rgba(41,76,123,.10);box-shadow:var(--glass-shadow)}
+  .acard:hover{box-shadow:inset 0 1px 0 #fff,0 18px 40px rgba(41,76,123,.14)}
+  .card > h2{color:#0B1A2F}
+  .kpi.hero{background:#071425;border-color:#071425}
+  .kpi.hero:hover{border-color:#294C7B}
+  .modal,.menu,.menu-pop,.toast{background:#FFFFFF;border-color:rgba(41,76,123,.14)}
+  .menu,.menu-pop{box-shadow:0 18px 40px rgba(11,26,47,.14)} .toast{box-shadow:0 14px 34px rgba(11,26,47,.16)}
+
+  /* chips: readable tints on white */
+  .chip{background:rgba(255,255,255,.8)}
+  .chip.t2{color:#0E6E8C;background:#E8F6FA;border-color:rgba(14,110,140,.25)}
+
+  /* working agents: keep the running light, a deeper lime so it reads on white */
+  .acard[data-s="working"]{box-shadow:0 0 0 1px rgba(165,194,61,.55),0 10px 30px rgba(165,194,61,.18)}
+
+
+  /* ============ DASHBOARD LAYOUT: left sidebar on desktop, bottom bar on phone ============ */
+  .side{z-index:40;background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(244,247,253,.72));backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%)}
+  .side .bar{margin:0}
+  .side .tabs{background:transparent;border:0;padding:0;border-radius:0;backdrop-filter:none}
+  .side .tab .ic{color:var(--muted)}
+  .side .tab[aria-selected="true"] .ic{color:#D7FD53}
+  .side-label{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtle);font-weight:600}
+  @media (min-width:961px){
+    #app{padding-left:256px}
+    .side{position:fixed;left:0;top:0;bottom:0;width:256px;box-sizing:border-box;display:flex;flex-direction:column;gap:22px;
+      padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+      border-right:1px solid rgba(41,76,123,.10);box-shadow:8px 0 30px rgba(41,76,123,.05);overflow-y:auto}
+    .side-brand{padding:4px 6px 6px}
+    .side .bar{flex-direction:column;align-items:stretch;gap:16px;flex-wrap:nowrap}
+    .side .newbtn{order:-1;width:100%;margin:0}
+    .side .tabs{flex-direction:column;gap:2px;overflow:visible;width:100%}
+    .side .tab{justify-content:flex-start;width:100%;border-radius:12px;padding:11px 14px;font-size:.92rem;min-height:44px}
+    .side .tab:hover:not([aria-selected="true"]){background:rgba(41,76,123,.06);color:var(--fg)}
+    .side .tab .n{margin-left:auto}
+    .side .tsep{width:auto;height:auto;align-self:auto;background:none;margin:14px 14px 4px}
+    .side .tsep::after{content:"Growth";display:block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtle);font-weight:600}
+    .side .tabs::before{content:"Studio";display:block;margin:0 14px 6px;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--subtle);font-weight:600}
+    .side-foot{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgba(41,76,123,.10)}
+    header.top .brand{display:none}
+    header.top .hin{justify-content:flex-end;max-width:1180px}
+    .wrap{max-width:1180px}
+  }
+  @media (max-width:960px){
+    #app{padding-bottom:calc(78px + env(safe-area-inset-bottom,0px))}
+    .side{position:fixed;left:0;right:0;bottom:0;border-top:1px solid rgba(41,76,123,.12);box-shadow:0 -8px 30px rgba(41,76,123,.08);
+      padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px))}
+    .side-brand,.side-foot{display:none}
+    .side .bar{display:block}
+    .side .tabs{width:100%;justify-content:space-between;gap:0;overflow-x:auto}
+    .side .tab{flex:1 0 auto;flex-direction:column;gap:3px;padding:6px 8px;min-height:54px;font-size:.68rem;border-radius:12px;position:relative}
+    .side .tab .n{position:absolute;top:2px;right:6px;font-size:.6rem;padding:0 5px;min-width:16px}
+    .side .tsep{display:none}
+    .side .newbtn{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(86px + env(safe-area-inset-bottom,0px));width:auto!important;margin:0;
+      border-radius:999px;box-shadow:0 12px 28px rgba(7,20,37,.28);z-index:41}
+  }
+</style>
 </head>
 <body>
 <div class="glow" aria-hidden="true"></div>
@@ -525,7 +642,26 @@
 
 <!-- ============ APP ============ -->
 <div id="app" hidden>
-  <header class="top"><div class="hin">
+  <aside class="side" aria-label="Studio navigation">
+  <div class="side-brand"><a class="brand" href="#" onclick="event.preventDefault();document.getElementById('brandLink').click()" aria-label="Tekydis Studio — Overview">
+      <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="var(--elev-2)" stroke="var(--line-strong)"/><circle class="ring" cx="24" cy="24" r="11" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/><circle cx="24" cy="24" r="4.2" fill="var(--accent)"/></svg>
+      <span class="wm"><b>TEKYDIS</b><span>Studio</span></span>
+    </a></div>
+  <div class="bar side-nav">
+    <div class="tabs" role="tablist" aria-label="Studio sections">
+      <button class="tab" role="tab" data-tab="overview" id="tab-overview" data-ic="grid">Overview</button>
+      <button class="tab" role="tab" data-tab="floor" id="tab-floor" data-ic="users">Floor</button>
+      <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="n" id="nProj"></span></button>
+      <span class="tsep" aria-hidden="true"></span>
+      <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="n" id="nPros"></span></button>
+      <button class="tab" role="tab" data-tab="pipeline" id="tab-pipeline" data-ic="funnel">Pipeline<span class="n" id="nPipe"></span></button>
+      <button class="tab" role="tab" data-tab="quotes" id="tab-quotes" data-ic="receipt">Quotes<span class="n" id="nQuotes"></span></button>
+    </div>
+    <button class="btn newbtn" id="newBtn" type="button"></button>
+  </div>
+  <div class="side-foot"><span class="side-label">Tekydis Studio OS</span></div>
+</aside>
+<header class="top"><div class="hin">
     <a class="brand" href="#" id="brandLink" aria-label="Tekydis Studio — Overview">
       <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="var(--elev-2)" stroke="var(--line-strong)"/><circle class="ring" cx="24" cy="24" r="11" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/><circle cx="24" cy="24" r="4.2" fill="var(--accent)"/></svg>
       <span class="wm"><b>TEKYDIS</b><span>Studio</span></span>
@@ -552,18 +688,6 @@
     <div class="when" id="when"></div>
   </div>
 
-  <div class="bar">
-    <div class="tabs" role="tablist" aria-label="Studio sections">
-      <button class="tab" role="tab" data-tab="overview" id="tab-overview" data-ic="grid">Overview</button>
-      <button class="tab" role="tab" data-tab="floor" id="tab-floor" data-ic="users">Floor</button>
-      <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="n" id="nProj"></span></button>
-      <span class="tsep" aria-hidden="true"></span>
-      <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="n" id="nPros"></span></button>
-      <button class="tab" role="tab" data-tab="pipeline" id="tab-pipeline" data-ic="funnel">Pipeline<span class="n" id="nPipe"></span></button>
-      <button class="tab" role="tab" data-tab="quotes" id="tab-quotes" data-ic="receipt">Quotes<span class="n" id="nQuotes"></span></button>
-    </div>
-    <button class="btn newbtn" id="newBtn" type="button"></button>
-  </div>
 
   <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
     <div class="kpis" id="kpis"></div>
@@ -828,7 +952,7 @@ const AP=`<svg class="ap" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="
 /* ---------- reference data ---------- */
 const POD_ORDER=["design","engineering","quality","growth","creative","business"];
 const POD_LABEL={command:"Command",design:"Design Pod",engineering:"Engineering Pod",quality:"Quality",growth:"Growth Pod",creative:"Creative",business:"Business"};
-const AV_COLOR={command:"#D7FD53",design:"#B48CF2",engineering:"#F5C451",quality:"#6FC9E8",growth:"#6FD58F",creative:"#F2A0D0",business:"#8FB8FF"};
+const AV_COLOR={command:"#5F7A10",design:"#6D28D9",engineering:"#A35A00",quality:"#0E6E8C",growth:"#167A3E",creative:"#B0256E",business:"#1D4ED8"};
 const ROLE={ceo:"CEO","product-manager":"Product Manager","ux-researcher":"UX Researcher","senior-product-designer":"Senior Product Designer","ui-designer":"UI Designer","front-end-dev":"Front-end Developer","back-end-dev":"Back-end Developer","database-engineer":"Database Engineer","qa-accessibility":"QA & Accessibility",marketer:"Marketer","sales-bd":"Sales & BD","content-writer":"Content Writer",prospector:"Prospector","brand-designer":"Brand Designer",financer:"Financer"};
 const ROLE_IC={ceo:"crown","product-manager":"clipboard","ux-researcher":"search","senior-product-designer":"pen","ui-designer":"layout","front-end-dev":"code","back-end-dev":"server","database-engineer":"database","qa-accessibility":"shieldcheck",marketer:"megaphone","sales-bd":"handshake","content-writer":"type",prospector:"target","brand-designer":"palette",financer:"calc"};
 const LEVELS=["","Trainee","Associate","Junior","Specialist","Senior","Lead","Principal","Expert","Master","Legend"];
@@ -1012,7 +1136,7 @@ function renderOverview(){
     ${pp.length?pp.map(p=>{const n=S.prospects.filter(x=>x.project_id===p.id),nw=n.filter(x=>(x.status||'new')==='new').length;return `<div class="stagebar" style="grid-template-columns:1fr auto"><span>${esc(p.name)}</span><span class="meta">${n.length} found${nw?` · <b style="color:var(--amber)">${nw} to review</b>`:''}</span></div>`;}).join(''):`<p class="empty">${ic('pin')}No prospecting search running. Start one from Projects → New → Prospecting.</p>`}
     ${newN?`<button class="btn sm" id="ovProsGo" style="margin-top:12px">${btnHtml('pin','Review '+newN+' prospect'+(newN>1?'s':''))}</button>`:''}`;
   if($('ovProsGo'))$('ovProsGo').onclick=()=>showTab('prospects');
-  $('activity').innerHTML=S.events.length?S.events.map(e=>{const a=S.agents.find(x=>x.slug===e.agent);const col=a?AV_COLOR[a.pod]:(e.agent==='founder'?'#F4F7FC':'#7F8EA6');const icn=a?ROLE_IC[a.slug]:(e.agent==='founder'?'user':'activity');
+  $('activity').innerHTML=S.events.length?S.events.map(e=>{const a=S.agents.find(x=>x.slug===e.agent);const col=a?AV_COLOR[a.pod]:(e.agent==='founder'?'#0B1A2F':'#56667E');const icn=a?ROLE_IC[a.slug]:(e.agent==='founder'?'user':'activity');
     return `<li><span class="who-av" style="background:${col}">${ic(icn)}</span><span><time>${esc(fmtTime(e.created_at))} · ${esc(agentName(e.agent))}</time>${esc(e.body)}</span></li>`;}).join(''):`<li class="empty">${ic('activity')}No activity yet.</li>`;
 }
 function agentName(slug){const a=S.agents.find(x=>x.slug===slug);return a?roleOf(a)+' · '+nameOf(a):(slug==='founder'?'You':slug==='studio'?'Studio':(slug||''));}
