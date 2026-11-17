@@ -1366,13 +1366,31 @@ function openAgent(a){
   const ladder=LEVELS.map((n,i)=>i?`<div class="lv ${i===(a.level||1)?'cur':''}"><b>L${i}</b>${n}</div>`:'').join('');
   openDrawer(`<div class="d-av" style="background:${AV_COLOR[a.pod]||'#9ab'}">${ic(ROLE_IC[a.slug]||'user')}</div>
     <div class="d-role">${esc(roleOf(a))}</div><div class="d-nm">${esc(nameOf(a))}</div>
-    <div class="d-rl" data-s="${esc(a.status||'idle')}"><span class="status"><span class="sl"></span>${A_STATUS[a.status]||'Idle'}</span><span class="chip">${esc(POD_LABEL[a.pod]||a.pod)}</span></div>
+    <div class="d-rl" data-s="${esc(a.status||'idle')}"><span class="status"><span class="sl"></span>${A_STATUS[a.status]||'Idle'}</span><span class="chip">${esc(POD_LABEL[a.pod]||a.pod)}</span>${a.frozen?`<span class="flag warn" style="margin-inline-start:6px">${ic('alert','sm')}Frozen</span>`:''}</div>
     <div class="d-sec">What this role does</div><div class="d-note">${esc(a.bio||'No bio yet.')}</div>
     <div class="d-grid"><div class="d-box"><div class="k">Level</div><div class="v">L${a.level||1} · ${LEVELS[a.level||1]}</div></div><div class="d-box"><div class="k">XP</div><div class="v">${a.xp||0}</div></div></div>
     <div class="d-sec">Working on</div><div class="d-note">${a.current_task?esc(a.current_task):'Nothing right now.'}</div>
     <div class="d-sec">How this role levels up</div><div class="d-note">Approved unchanged +15 XP · passed QA first time +10 · rejected with a note −5 (your note becomes a lesson) · repeating a rejected mistake −20 and blocks promotion. The CEO proposes promotions; you confirm them.</div>
-    <div class="d-sec">Lessons learned</div><div class="d-note">Lessons and weekly growth cards appear here once agents are connected to the studio.</div>
-    <div class="d-sec">Level ladder</div><div class="d-ladder">${ladder}</div>`);
+    <div class="d-sec">Lessons learned${(a.lessons&&a.lessons.length)?' · '+a.lessons.length:''}</div><div class="d-note">${(a.lessons&&a.lessons.length)?`<ul class="tl" style="margin-top:4px">${a.lessons.slice(-15).reverse().map(l=>`<li>${esc(typeof l==='string'?l:(l&&(l.text||l.note)||JSON.stringify(l)))}</li>`).join('')}</ul>`:'No lessons yet. When you request changes on a deliverable, your note is saved here as a lesson the agent reads before its next task.'}</div>
+    <div class="d-sec">Level ladder</div><div class="d-ladder">${ladder}</div>
+    <div class="d-sec">Manage agent</div>
+    <div class="pacts">
+      <button class="btn sec sm" id="agEdit">${btnHtml('edit','Edit')}</button>
+      <button class="btn sec sm" id="agFreeze">${btnHtml(a.frozen?'undo':'shield',a.frozen?'Unfreeze':'Freeze')}</button>
+      ${a.slug==='ceo'?'':`<button class="btn danger sm" id="agDel">${btnHtml('trash','Delete')}</button>`}
+    </div>
+    <form id="agEditForm" hidden style="margin-top:12px">
+      <div class="field"><label class="lbl" for="agName">Display name</label><input type="text" id="agName" value="${esc(nameOf(a))}"></div>
+      <div class="field"><label class="lbl" for="agBio">What this role does</label><textarea id="agBio">${esc(a.bio||'')}</textarea></div>
+      <div class="field"><label class="lbl" for="agLevel">Level</label><select id="agLevel">${LEVELS.map((n,i)=>i?`<option value="${i}"${i===(a.level||1)?' selected':''}>L${i} · ${n}</option>`:'').join('')}</select></div>
+      <button class="btn sm" type="submit">${btnHtml('save','Save')}</button>
+    </form>
+    <div class="formmsg" id="agMsg" role="status"></div>`);
+  const dd=drawer;
+  dd.querySelector('#agEdit').onclick=()=>{const fm=dd.querySelector('#agEditForm');fm.hidden=!fm.hidden;if(!fm.hidden)dd.querySelector('#agName').focus();};
+  dd.querySelector('#agFreeze').onclick=async e=>{e.currentTarget.disabled=true;const {error}=await db.from('agents').update({frozen:!a.frozen}).eq('id',a.id);const m=dd.querySelector('#agMsg');if(error){m.className='formmsg err';m.textContent="Couldn't update: "+error.message+(/frozen|column/i.test(error.message)?' - run the agent-controls DB migration first.':'');e.currentTarget.disabled=false;return;}await logEvent('agent_freeze',(a.frozen?'Unfroze ':'Froze ')+roleOf(a));toast(a.frozen?roleOf(a)+' unfrozen':roleOf(a)+' frozen','ok');closeDrawer();load(true);};
+  const delb=dd.querySelector('#agDel');if(delb)delb.onclick=async e=>{const b=e.currentTarget;if(!b.dataset.c){b.dataset.c='1';b.innerHTML=btnHtml('trash','Tap again to delete');setTimeout(()=>{if(b.isConnected){b.dataset.c='';b.innerHTML=btnHtml('trash','Delete');}},3000);return;}b.disabled=true;const {error}=await db.from('agents').delete().eq('id',a.id);const m=dd.querySelector('#agMsg');if(error){m.className='formmsg err';m.textContent="Couldn't delete: "+error.message;b.disabled=false;return;}await logEvent('agent_deleted','Deleted agent '+roleOf(a));toast(roleOf(a)+' deleted');closeDrawer();load(true);};
+  dd.querySelector('#agEditForm').onsubmit=async e=>{e.preventDefault();const row={persona_name:dd.querySelector('#agName').value.trim()||null,bio:dd.querySelector('#agBio').value.trim()||null,level:Number(dd.querySelector('#agLevel').value)};const {error}=await db.from('agents').update(row).eq('id',a.id);const m=dd.querySelector('#agMsg');if(error){m.className='formmsg err';m.textContent="Couldn't save: "+error.message;return;}await logEvent('agent_edited','Edited '+roleOf(a));toast('Agent updated','ok');closeDrawer();load(true);};
 }
 /* ---------- project page ---------- */
 let PEV=[];
