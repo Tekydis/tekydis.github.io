@@ -1486,8 +1486,8 @@ function renderPTasks(p,box){
   if(ts.length&&!rows.length)list.innerHTML=`<p class="d-note">${PTASKTAB==='done'?'No finished tasks yet.':'Nothing in progress right now — check the Done tab.'}</p>`;
   rows.forEach(({t,ix})=>{const st=tState(t),cs=commentsOf(t.id),last=cs[cs.length-1],a=S.agents.find(x=>x.slug===t.agent),d=document.createElement('article');
     d.className='task2'+(SIDE&&SIDE.tid===t.id?' sel':'');d.dataset.s=st;
-    const hasOut=(t.output_url||'').startsWith('storage:'),review=t.status==='review'&&!p.archived_at,asking=t.status==='needs_you'&&!p.archived_at;
-    d.innerHTML=`<div class="t1"><div class="lft"><span class="tno">#${ix+1}</span>${t.stage?`<span class="stg">${esc(t.stage)}</span>`:''}</div><div class="rgt">${hasOut?`<button class="btn sec sm" data-act="view">${btnHtml('ext','Open deliverable')}</button>`:''}<span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div></div>
+    const hasOut=(t.output_url||'').startsWith('storage:'),isLink=/^https?:\/\//i.test(t.output_url||''),review=t.status==='review'&&!p.archived_at,asking=t.status==='needs_you'&&!p.archived_at;
+    d.innerHTML=`<div class="t1"><div class="lft"><span class="tno">#${ix+1}</span>${t.stage?`<span class="stg">${esc(t.stage)}</span>`:''}</div><div class="rgt">${hasOut?`<button class="btn sec sm" data-act="view">${btnHtml('ext','Open deliverable')}</button>`:isLink?`<a class="btn sec sm" href="${esc(t.output_url)}" target="_blank" rel="noopener">${btnHtml('ext',/figma\.com/i.test(t.output_url)?'Open in Figma':'Open link')}</a>`:''}<span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div></div>
       <div class="tt">${esc(t.title)}</div>
       <div class="who">${a?`${esc(roleOf(a))} · ${esc(nameOf(a))}`:t.agent?esc(t.agent):'Unassigned'}</div>
       <div class="when">Updated ${esc(fmtTime(t.updated_at))}</div>
@@ -1495,7 +1495,7 @@ function renderPTasks(p,box){
         :t.stuck_reason?`<div class="why"><b>Why it's stuck:</b> ${esc(t.stuck_reason)}</div>`:st==='stalled'?`<div class="why"><b>No update since ${esc(fmtTime(t.updated_at))}.</b> The agent stopped reporting. It may have crashed, your Mac may be asleep, or credits ran out.</div>`:''}
       ${review||asking||(t.output_url&&!hasOut)||(hasOut&&t.status==='done'&&!/\.pdf$/i.test(t.output_url))?`<div class="row">
         ${asking?`<button class="btn sm" data-act="answer">${btnHtml('send','Answer')}</button>`:''}
-        ${!hasOut&&t.output_url?`<span class="meta">${ic('folder','sm')} On the studio Mac, not uploaded yet</span>`:''}
+        ${!hasOut&&!isLink&&t.output_url?`<span class="meta">${ic('folder','sm')} On the studio Mac, not uploaded yet</span>`:''}
         ${review?`<button class="btn sm" data-act="approve">${btnHtml('check','Approve')}</button><button class="btn sec sm" data-act="changes">${btnHtml('edit','Request changes')}</button>`:''}
         ${hasOut&&t.status==='done'&&!/\.pdf$/i.test(t.output_url)&&!p.archived_at?(cs.some(c=>c.author==='founder'&&/^Make a client version/.test(c.body))?`<span class="meta">${ic('check','sm')} Client version requested</span>`:`<button class="btn sec sm" data-act="client">${btnHtml('download','Make client version (PDF)')}</button>`):''}</div>`:''}
       <div class="last">${ic('message','sm')}<span class="txt">${last?`<b>${esc(last.author==='founder'?'You':agentName(last.author))}:</b> ${esc(last.body)}`:'No messages yet'}</span>
