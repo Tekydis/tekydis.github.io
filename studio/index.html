@@ -114,6 +114,8 @@
   .menu-pop button:hover,.menu-pop button:focus-visible{background:var(--field);outline:none}
   .task2{border:1px solid var(--line);border-radius:var(--r);background:var(--elev);padding:16px 18px;margin-bottom:12px}
   .task2.sel{border-color:var(--accent)}
+  .task2[data-s="done"]{background:color-mix(in srgb,var(--green) 7%,var(--elev));border-color:rgba(111,213,143,.32)}
+  .task2[data-s="done"] .tt{color:var(--muted)}
   .task2 .t1{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:8px}
   .task2 .t1 .lft{display:flex;gap:8px;align-items:center;min-width:0}
   .task2 .t1 .rgt{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
@@ -652,8 +654,8 @@
       <button class="tab" role="tab" data-tab="overview" id="tab-overview" data-ic="grid">Overview</button>
       <button class="tab" role="tab" data-tab="floor" id="tab-floor" data-ic="users">Floor</button>
       <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="n" id="nProj"></span></button>
-      <span class="tsep" aria-hidden="true"></span>
       <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="n" id="nPros"></span></button>
+      <span class="tsep" aria-hidden="true"></span>
       <button class="tab" role="tab" data-tab="pipeline" id="tab-pipeline" data-ic="funnel">Pipeline<span class="n" id="nPipe"></span></button>
       <button class="tab" role="tab" data-tab="quotes" id="tab-quotes" data-ic="receipt">Quotes<span class="n" id="nQuotes"></span></button>
     </div>
@@ -1092,7 +1094,7 @@ function showTab(t){
 }
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
 $('brandLink').addEventListener('click',e=>{e.preventDefault();showTab('overview');});
-$('needsPill').addEventListener('click',()=>showTab('overview'));
+$('needsPill').addEventListener('click',()=>{showTab('overview');setTimeout(()=>{const c=document.querySelector('.needs-card');if(c)c.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});},80);});
 $('newBtn').addEventListener('click',()=>{if(tab==='pipeline')openLead();else if(tab==='quotes')openQuote();else openProjectModal();});
 function bindFilters(boxId,key,render){document.querySelectorAll('#'+boxId+' .fchip').forEach(c=>c.addEventListener('click',()=>{F[key]=c.dataset.f;document.querySelectorAll('#'+boxId+' .fchip').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));render();}));}
 bindFilters('pipeFilters','pipe',()=>renderPipeline());bindFilters('prosFilters','pros',()=>renderProspects());
@@ -1479,7 +1481,7 @@ function renderPTasks(p,box){
       <select id="tStage" aria-label="Stage">${T_STAGES.map(x=>`<option>${x}</option>`).join('')}</select><select id="tAgent" aria-label="Assign to">${agentOpts('')}</select><button class="btn sm" type="submit">${btnHtml('plus','Add')}</button></form>`}`;
   const list=$('tList');
   if(!ts.length)list.innerHTML=`<p class="d-note">No tasks yet.${p.status==='draft'?' This is a draft, so the studio won\'t start it until you send it.':' The CEO breaks the brief into tasks when it picks the project up.'}</p>`;
-  ts.forEach((t,ix)=>{const st=tState(t),cs=commentsOf(t.id),last=cs[cs.length-1],a=S.agents.find(x=>x.slug===t.agent),d=document.createElement('article');
+  ts.map((t,ix)=>({t,ix})).reverse().forEach(({t,ix})=>{const st=tState(t),cs=commentsOf(t.id),last=cs[cs.length-1],a=S.agents.find(x=>x.slug===t.agent),d=document.createElement('article');
     d.className='task2'+(SIDE&&SIDE.tid===t.id?' sel':'');d.dataset.s=st;
     const hasOut=(t.output_url||'').startsWith('storage:'),review=t.status==='review'&&!p.archived_at,asking=t.status==='needs_you'&&!p.archived_at;
     d.innerHTML=`<div class="t1"><div class="lft"><span class="tno">#${ix+1}</span>${t.stage?`<span class="stg">${esc(t.stage)}</span>`:''}</div><div class="rgt">${hasOut?`<button class="btn sec sm" data-act="view">${btnHtml('ext','Open deliverable')}</button>`:''}<span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div></div>
