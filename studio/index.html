@@ -1299,7 +1299,7 @@ function agentCard(ag,extra){
   b.innerHTML=`<span class="open">${ic('arrow','sm')}</span>
     <div class="row1"><span class="av" style="background:${AV_COLOR[ag.pod]||'#9ab'}">${ic(ROLE_IC[ag.slug]||'user')}<span class="light"></span></span>
     <span class="who"><span class="role">${esc(roleOf(ag))}</span><span class="nm">${esc(nameOf(ag))}</span></span></div>
-    <div class="lvlrow"><span>Level <b>${ag.level||1}</b> · ${LEVELS[ag.level||1]||''}</span><span>${xp} XP</span></div>
+    <div class="lvlrow"><span>Level <b>${ag.level||1}</b> · ${LEVELS[ag.level||1]||''}</span><span>${xp%100}/100 XP</span></div>
     <div class="xpbar"><i style="width:${pct}%"></i></div>
     <div class="task">${ag.current_task?esc(ag.current_task):'<span style="color:var(--subtle)">No task right now</span>'}</div>
     <span class="status"><span class="sl"></span>${A_STATUS[ag.status]||esc(ag.status)||'Idle'}</span>`;
@@ -1515,7 +1515,7 @@ function openAgent(a){
     <div class="d-sec">What this role does</div><div class="d-note">${esc(a.bio||'No bio yet.')}</div>
     <div class="d-grid"><div class="d-box"><div class="k">Level</div><div class="v">L${a.level||1} · ${LEVELS[a.level||1]}</div></div><div class="d-box"><div class="k">XP</div><div class="v">${a.xp||0}</div></div></div>
     <div class="d-sec">Working on</div><div class="d-note">${a.current_task?esc(a.current_task):'Nothing right now.'}</div>
-    <div class="d-sec">How this role levels up</div><div class="d-note">Approved unchanged +15 XP · passed QA first time +10 · rejected with a note −5 (your note becomes a lesson) · repeating a rejected mistake −20 and blocks promotion. The CEO proposes promotions; you confirm them.</div>
+    <div class="d-sec">How this role levels up</div><div class="d-note">You approve it first time: <b>+40 XP</b> · you approve it after changes: <b>+20 XP</b> · you request changes: <b>−10 XP</b> (your note becomes a lesson). Every <b>100 XP</b> = next level, up to L10. XP never drops below 0 and an agent never loses a level.</div>
     <div class="d-sec">Lessons learned${(a.lessons&&a.lessons.length)?' · '+a.lessons.length:''}</div><div class="d-note">${(a.lessons&&a.lessons.length)?`<ul class="tl" style="margin-top:4px">${a.lessons.slice(-15).reverse().map(l=>`<li>${esc(typeof l==='string'?l:(l&&(l.text||l.note)||JSON.stringify(l)))}</li>`).join('')}</ul>`:'No lessons yet. When you request changes on a deliverable, your note is saved here as a lesson the agent reads before its next task.'}</div>
     <div class="d-sec">Level ladder</div><div class="d-ladder">${ladder}</div>
     <div class="d-sec">Manage agent</div>
@@ -1699,7 +1699,10 @@ async function approveTask(t,btn){if(btn)btn.disabled=true;await db.from('task_c
   const r=await db.from('tasks').update({status:'done'}).eq('id',t.id);if(r.error){if(btn)btn.disabled=false;toast("Couldn't approve: "+r.error.message,'err');return;}
   await logEvent('approved','You approved #'+taskNo(t)+' '+t.title,t.project_id);
   let amsg='Approved';const ag=S.agents.find(x=>x.slug===t.agent);
-  if(ag){let xp=(ag.xp||0)+40,lvl=ag.level||1;while(xp>=100&&lvl<10){xp-=100;lvl++;}await db.from('agents').update({xp,level:lvl}).eq('id',ag.id);if(lvl>(ag.level||1))amsg=roleOf(ag)+' leveled up to L'+lvl+(LEVELS[lvl]?' · '+LEVELS[lvl]:'');}
+  // XP rule: approved first time +40, approved after changes +20; every 100 XP = next level (max L10)
+  if(ag){const redo=(S.comments||[]).some(c=>c.task_id===t.id&&String(c.body||'').startsWith('Changes requested'));const gain=redo?20:40;
+    let xp=(ag.xp||0)+gain,lvl=ag.level||1;while(xp>=100&&lvl<10){xp-=100;lvl++;}await db.from('agents').update({xp,level:lvl}).eq('id',ag.id);
+    amsg=lvl>(ag.level||1)?roleOf(ag)+' leveled up to L'+lvl+(LEVELS[lvl]?' · '+LEVELS[lvl]:''):`Approved · ${roleOf(ag)} +${gain} XP (${xp}/100)`;}
   toast(amsg,'ok');load(true);}
 
 /* ---------- side panel (conversation / deliverable) ---------- */
@@ -1729,7 +1732,8 @@ function renderSide(focus){const side=$('pSide'),body=$('view-project').querySel
       const body=mode==='changes'?'Changes requested: '+txt:txt;const r=await db.from('task_comments').insert({task_id:t.id,project_id:t.project_id,author:'founder',body});
       if(r.error){toast("Couldn't send: "+r.error.message,'err');return;}
       if(mode==='answer'){await db.from('tasks').update({status:'todo'}).eq('id',t.id);await logEvent('answered','You answered #'+no+' '+t.title,t.project_id);toast('Answer sent. The CEO picks it up on the next run.','ok');SIDE.mode='comment';}
-      else if(mode==='changes'){await db.from('tasks').update({status:'todo'}).eq('id',t.id);await logEvent('changes_requested','You requested changes on #'+no+' '+t.title+': '+txt,t.project_id);toast('Sent. The agent redoes it on the next run, and your note becomes a lesson.','ok');SIDE.mode='comment';}
+      else if(mode==='changes'){await db.from('tasks').update({status:'todo'}).eq('id',t.id);
+        const ag=S.agents.find(x=>x.slug===t.agent);/* −10 XP, never below 0, no level loss */if(ag)await db.from('agents').update({xp:Math.max(0,(ag.xp||0)-10)}).eq('id',ag.id);await logEvent('changes_requested','You requested changes on #'+no+' '+t.title+': '+txt,t.project_id);toast('Sent. The agent redoes it on the next run, and your note becomes a lesson.','ok');SIDE.mode='comment';}
       else{await logEvent('comment','Comment on #'+no+' '+t.title,t.project_id);toast('Sent','ok');}
       ta.value='';ta.blur();load(true);};}
   $('sideX').onclick=closeSide;if(focus)setTimeout(()=>{const f=$('sideTa')||$('sideX');f.focus();},30);
