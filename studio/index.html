@@ -10,7 +10,8 @@
 <meta name="apple-mobile-web-app-title" content="Tekydis Studio">
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="../favicon.svg">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Teko:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Teko:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script>/* theme + language before first paint */(function(){var t,l;try{t=localStorage.getItem("ts_theme")||"system";l=localStorage.getItem("ts_lang")||"en";}catch(e){t="system";l="en";}var d=t==="dark"||(t==="system"&&window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches);var h=document.documentElement;h.dataset.theme=d?"dark":"light";if(l==="ar"){h.lang="ar";h.dir="rtl";}})();</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css">
 <style>
   /* Tekydis Studio — the internal "cave". Tokens from the TEKYDIS V1 design system (via tekydis.github.io). */
@@ -438,11 +439,94 @@
   .sw input:disabled+.swt{opacity:.5}
   .sw .nm{font-weight:600} .sw .rg{font-size:.82rem;color:var(--subtle)}
   @media (prefers-reduced-motion:reduce){.swt,.swt::after{transition:none}}
-  .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-inline-start:6px;border-radius:999px;background:#C81E1E;color:#fff;font-size:.72rem;font-weight:700;line-height:1;vertical-align:1px}
   .projtools .linkbtn{margin-inline-start:auto}
   .projtools .chips{margin-bottom:0}
   .projtools .newbtn{margin-left:0}
   #quoteTools{justify-content:flex-end} #quoteTools:empty{display:none}
+  /* ---- counts: one rule. grey = information, blue = active work, red = waiting on you ---- */
+  .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-inline-start:6px;border-radius:999px;background:#294C7B;color:#fff;font-size:.72rem;font-weight:700;line-height:1;vertical-align:1px;font-family:var(--sans)}
+  .cnt.alert{background:#C81E1E;color:#fff}
+  .cnt.muted{background:var(--line-strong);color:var(--fg)}
+  .tab .n{background:var(--line);color:var(--muted)!important;font-weight:600}
+  .tab[aria-selected="true"] .n{background:rgba(255,255,255,.18);color:#fff!important}
+  .side .tab .cnt.alert{margin-inline-start:6px}
+  @media (min-width:961px){.side .tab .cnt.alert{margin-inline-start:auto}.side .tab .cnt.alert:not([hidden])+.n{margin-inline-start:6px}}
+  @media (max-width:960px){.side .tab .cnt.alert{position:absolute;top:2px;inset-inline-end:6px;margin:0;min-width:18px;height:18px;font-size:.62rem;padding:0 5px}
+    .side .tab .cnt.alert:not([hidden])+.n{display:none}}
+  /* ---- loading skeleton ---- */
+  .skel{display:none}
+  body.loading .skel{display:grid;gap:12px;margin-top:6px}
+  body.loading .wrap>section[role=tabpanel]{display:none!important}
+  .skel i{display:block;height:84px;border-radius:16px;background:linear-gradient(90deg,var(--line) 0%,var(--line-strong) 40%,var(--line) 80%);background-size:300% 100%;animation:sk 1.4s ease-in-out infinite}
+  .skel i:first-child{height:44px;width:min(420px,70%)}
+  @keyframes sk{0%{background-position:100% 0}100%{background-position:0 0}}
+  @media (prefers-reduced-motion:reduce){.skel i{animation:none}}
+  /* ---- global search ---- */
+  .hsearch{position:relative;flex:1 1 260px;max-width:380px;margin-inline-end:auto}
+  .hsearch input{width:100%;min-height:40px;border-radius:999px;padding:8px 14px 8px 36px;border:1px solid var(--line-strong);background:var(--field);color:var(--fg);font:inherit;font-size:.88rem}
+  .hsearch .sic{position:absolute;inset-inline-start:12px;top:50%;transform:translateY(-50%);color:var(--subtle);pointer-events:none;display:flex}
+  [dir=rtl] .hsearch input{padding:8px 36px 8px 14px}
+  .sres{position:absolute;inset-inline-start:0;top:calc(100% + 6px);width:min(460px,92vw);max-height:60vh;overflow:auto;background:var(--elev-2);border:1px solid var(--line-strong);border-radius:14px;padding:6px;z-index:60;box-shadow:0 18px 40px rgba(11,26,47,.18)}
+  .sres button{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;border:0;background:none;color:var(--fg);text-align:start;padding:9px 12px;border-radius:9px;cursor:pointer;min-height:44px}
+  .sres button:hover,.sres button:focus-visible{background:var(--line);outline:none}
+  .sres .k{font-size:.7rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
+  .sres .none{padding:12px;color:var(--muted);font-size:.88rem}
+  @media (max-width:960px){.hsearch{flex:1 1 auto;max-width:none;margin-inline:8px}}
+  /* ---- toast with an action (Undo) ---- */
+  .toast .tact{margin-inline-start:8px;border:1px solid var(--line-strong);background:transparent;color:var(--fg);font-weight:600;border-radius:999px;padding:4px 12px;min-height:32px;cursor:pointer}
+  /* ---- appearance / language pickers ---- */
+  .prefrow{display:flex;flex-wrap:wrap;gap:18px;margin:4px 0 6px}
+  .prefrow .lbl{display:block;margin-bottom:6px}
+  .tgline{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 8px;font-size:.88rem}
+  .tgline .dot{width:9px;height:9px;border-radius:50%;background:var(--subtle)} .tgline.on .dot{background:var(--green)}
+  /* ---- dark theme touch-ups (the base sheet is the dark theme; these fix the light-only layout colours) ---- */
+  html[data-theme=dark] .side{background:linear-gradient(180deg,rgba(14,32,56,.96),rgba(7,20,37,.96));border-color:var(--line)}
+  html[data-theme=dark] header.top{background:rgba(7,20,37,.82);border-bottom-color:var(--line);backdrop-filter:blur(18px)}
+  html[data-theme=dark] .cnt{background:#4376BA}
+  html[data-theme=dark] .cnt.alert{background:#C81E1E}
+  html[data-theme=dark] .tab[aria-selected="true"] .n{background:var(--line-strong);color:var(--fg)!important}
+  @media (min-width:961px){[lang=ar] .side .tsep::after{content:"النمو"} [lang=ar] .side .tabs::before{content:"الاستوديو"}}
+  @media (max-width:560px){header.top .wm{display:none}}
+  /* ---- right-to-left (Arabic) ---- */
+  [lang=ar] body,[lang=ar] button,[lang=ar] input,[lang=ar] select,[lang=ar] textarea{font-family:'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif}
+  [lang=ar] body{line-height:1.7}
+  [lang=ar] *{letter-spacing:0!important}
+  [lang=ar] .eyebrow,[lang=ar] .set-h,[lang=ar] .side-label,[lang=ar] .sres .k{text-transform:none}
+  [dir=rtl] .glow{right:auto;left:-200px}
+  [dir=rtl] .brand{margin-right:0;margin-left:auto}
+  [dir=rtl] .uname,[dir=rtl] .mi,[dir=rtl] .kpi,[dir=rtl] .acard,[dir=rtl] button.item{text-align:right}
+  [dir=rtl] .menu,[dir=rtl] .menu-pop{right:auto;left:0}
+  [dir=rtl] .hello .when{text-align:left}
+  [dir=rtl] .btn.newbtn{margin-left:0;margin-right:auto}
+  [dir=rtl] .card > h2 small,[dir=rtl] .kpi .v small{margin-left:0;margin-right:auto}
+  [dir=rtl] .task .why{border-left:0;border-right:3px solid var(--red);border-radius:8px 0 0 8px}
+  [dir=rtl] .kpi .go{right:auto;left:12px}
+  [dir=rtl] .acard .open{right:auto;left:13px}
+  [dir=rtl] .row1{padding-right:0;padding-left:20px}
+  [dir=rtl] .modal h2{padding-right:0;padding-left:48px}
+  [dir=rtl] .mx{right:auto;left:16px}
+  [dir=rtl] .rad output,[dir=rtl] .qsvc .amt{text-align:left}
+  [dir=rtl] .mfoot .left{margin-right:0;margin-left:auto}
+  [dir=rtl] .drawer{right:auto;left:0;border-left:0;border-right:1px solid var(--line-strong);transform:translateX(-100%)}
+  [dir=rtl] .drawer.open{transform:none}
+  [dir=rtl] .d-role{padding-right:0;padding-left:50px}
+  [dir=rtl] .tl{margin:0 6px 0 0;border-left:0;border-right:2px solid var(--line)}
+  [dir=rtl] .tl li::before{left:auto;right:-6px}
+  [dir=rtl] .vline,[dir=rtl] .tree{margin-left:0;margin-right:31px}
+  [dir=rtl] .tree{padding-left:0;padding-right:26px}
+  [dir=rtl] .tree::before,[dir=rtl] .flow{left:auto;right:0}
+  [dir=rtl] .branch::before{left:auto;right:-26px}
+  [dir=rtl] .av .light{right:auto;left:-3px}
+  [dir=rtl] .ic-dir,[dir=rtl] .go svg,[dir=rtl] .open svg{transform:scaleX(-1)}
+  @media (min-width:961px){
+    [dir=rtl] #app{padding-left:0;padding-right:256px}
+    [dir=rtl] .side{left:auto;right:0;border-right:0;border-left:1px solid rgba(41,76,123,.10);box-shadow:-8px 0 30px rgba(41,76,123,.05)}
+    [dir=rtl] .side .tab .n{margin-left:0;margin-right:auto}
+    [dir=rtl] .side .tab .cnt.alert{margin-left:0;margin-right:auto}
+  }
+  @media (max-width:960px){[dir=rtl] .side .newbtn{right:auto;left:max(16px,env(safe-area-inset-left,0px))}}
+  @media (min-width:860px){[dir=rtl] .drawer.proj{left:50%;right:auto;transform:translate(-50%,14px)}[dir=rtl] .drawer.proj.open{transform:translate(-50%,0)}}
+
   .set-sec h3{display:flex;align-items:center;gap:8px;font-size:1rem;margin:0 0 4px}
   .set-sec h3 .ic{color:var(--accent)}
   .set-sec p{margin:0 0 12px;font-size:.84rem;color:var(--subtle)}
@@ -521,7 +605,7 @@
   @media (max-width:560px){.nlong{display:none}.brand{min-width:0;flex-shrink:1}.wm b{font-size:1.4rem}}
   @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
 </style>
-<style id="glass-theme">
+<style id="glass-colors">
   /* ============================================================
      TEKYDIS STUDIO — LIGHT GLASS THEME (Nov 2026)
      Same app, same data, same behaviour. Only the look changes, matching tekydis.github.io:
@@ -597,6 +681,9 @@
   .acard[data-s="working"]{box-shadow:0 0 0 1px rgba(165,194,61,.55),0 10px 30px rgba(165,194,61,.18)}
 
 
+</style>
+<script>if(document.documentElement.dataset.theme==="dark")document.getElementById("glass-colors").disabled=true;</script>
+<style id="glass-layout">
   /* ============ DASHBOARD LAYOUT: left sidebar on desktop, bottom bar on phone ============ */
   .side{z-index:40;background:linear-gradient(180deg,rgba(255,255,255,.82),rgba(244,247,253,.72));backdrop-filter:blur(22px) saturate(170%);-webkit-backdrop-filter:blur(22px) saturate(170%)}
   .side .bar{margin:0}
@@ -641,6 +728,7 @@
 </head>
 <body>
 <div class="glow" aria-hidden="true"></div>
+<script>document.body.classList.add('loading');</script>
 
 <!-- ============ LOGIN ============ -->
 <section class="login" id="login" hidden>
@@ -677,8 +765,8 @@
     <div class="tabs" role="tablist" aria-label="Studio sections">
       <button class="tab" role="tab" data-tab="overview" id="tab-overview" data-ic="grid">Overview</button>
       <button class="tab" role="tab" data-tab="floor" id="tab-floor" data-ic="users">Floor</button>
-      <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="n" id="nProj"></span></button>
-      <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="n" id="nPros"></span></button>
+      <button class="tab" role="tab" data-tab="projects" id="tab-projects" data-ic="folder">Projects<span class="cnt alert" id="aProj" hidden></span><span class="n" id="nProj"></span></button>
+      <button class="tab" role="tab" data-tab="prospects" id="tab-prospects" data-ic="pin">Prospects<span class="cnt alert" id="aPros" hidden></span><span class="n" id="nPros"></span></button>
       <span class="tsep" aria-hidden="true"></span>
       <button class="tab" role="tab" data-tab="pipeline" id="tab-pipeline" data-ic="funnel">Pipeline<span class="n" id="nPipe"></span></button>
       <button class="tab" role="tab" data-tab="quotes" id="tab-quotes" data-ic="receipt">Quotes<span class="n" id="nQuotes"></span></button>
@@ -691,6 +779,7 @@
       <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="var(--elev-2)" stroke="var(--line-strong)"/><circle class="ring" cx="24" cy="24" r="11" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/><circle cx="24" cy="24" r="4.2" fill="var(--accent)"/></svg>
       <span class="wm"><b>TEKYDIS</b><span>Studio</span></span>
     </a>
+    <div class="hsearch" role="search"><span class="sic" aria-hidden="true" id="sIco"></span><input type="search" id="gSearch" placeholder="Search projects, tasks, leads…" aria-label="Search the studio (press / )" autocomplete="off" aria-controls="gRes" aria-expanded="false"><div class="sres" id="gRes" hidden></div></div>
     <button class="hpill warn" id="needsPill" type="button" hidden aria-label="Things waiting on you"></button>
     <span class="hpill sync" id="conn"><span class="dot"></span><span id="connTxt">Connecting…</span></span>
     <div class="user">
@@ -713,6 +802,8 @@
     <div><h1 id="greet">Good evening.</h1><p id="summary">Loading the studio…</p></div>
     <div class="when" id="when"></div>
   </div>
+  <div class="skel" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+  <p class="sr" id="loadSr" role="status">Loading the studio…</p>
 
 
   <section id="view-overview" role="tabpanel" aria-labelledby="tab-overview">
@@ -887,6 +978,12 @@
     <h3 data-ic="user">Profile</h3><p>How you appear across the studio.</p>
     <div class="fgrid"><div class="field"><label class="lbl" for="sName">Name</label><input type="text" id="sName"></div><div class="field"><label class="lbl" for="sTitle">Position</label><input type="text" id="sTitle"></div></div>
     <button class="btn sm" id="sSaveProfile" type="button"></button><div class="formmsg" id="sMsgProfile" role="status"></div>
+    <h4 class="set-h">Display</h4>
+    <div class="prefrow">
+      <div><span class="lbl" id="lblTheme">Appearance</span><div class="segc" role="group" aria-labelledby="lblTheme" id="sTheme"><button type="button" data-v="system">System</button><button type="button" data-v="light">Light</button><button type="button" data-v="dark">Dark</button></div></div>
+      <div><span class="lbl" id="lblLang">Language</span><div class="segc" role="group" aria-labelledby="lblLang" id="sLang"><button type="button" data-v="en" lang="en">English</button><button type="button" data-v="ar" lang="ar">العربية</button></div></div>
+    </div>
+    <p class="d-note" style="font-size:.8rem">Saved on this device. Arabic switches the layout to right-to-left; project data (briefs, task titles, agent reports) stays in the language it was written in.</p>
   </section>
   <section class="set-sec" id="set-email" data-g="security">
     <h3 data-ic="mail">Login email</h3><p id="sEmailNow">Current: —</p>
@@ -916,6 +1013,9 @@
     <div class="fgrid">
       <div class="field"><label class="lbl" for="sStall">Flag a silent task as stuck after</label><select id="sStall"><option value="1">1 hour</option><option value="2">2 hours</option><option value="4">4 hours</option><option value="8">8 hours</option><option value="24">24 hours</option></select></div></div>
     <button class="btn sm" id="sSaveStudio" type="button"></button><div class="formmsg" id="sMsgStudio" role="status"></div>
+    <h4 class="set-h">Telegram alerts</h4>
+    <div class="tgline" id="tgLine"><span class="dot" aria-hidden="true"></span><span id="tgTxt">Checking…</span><button class="btn sec sm" id="tgTest" type="button"></button></div>
+    <p class="d-note" style="font-size:.8rem;margin-top:0">Messages you send the bot are queued for the CEO, even while the studio is paused for credit. Send <b>/status</b> to the bot to see if it is paused.</p>
     <h4 class="set-h">Advanced</h4>
     <label class="sw"><input type="checkbox" role="switch" id="sManual"><span class="swt" aria-hidden="true"></span><span><span class="nm">Manual control</span><br><span class="rg">Lets you change task status, agent, stage and order yourself. Off = the CEO manages tasks; you answer, comment and approve. Emergencies only; every change is logged. Applies at once.</span></span></label>
   </section>
@@ -1013,6 +1113,13 @@ const fmtTime=t=>{try{return new Date(t).toLocaleString('en-GB',{timeZone:'Afric
 const nameOf=a=>a.persona_name||a.name;
 const roleOf=a=>ROLE[a.slug]||a.name;
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Undo: the item disappears at once; the real delete happens after 6 s unless you press Undo
+const PENDING_DEL=new Set();
+function undoable(label,key,commit){PENDING_DEL.add(key);const t=$('toast');clearTimeout(t._t);
+  t.innerHTML=ic('trash')+'<span>'+esc(label)+'</span><button type="button" class="tact">Undo</button>';t.className='toast';t.hidden=false;
+  let done=false;const fin=async()=>{if(done)return;done=true;t.hidden=true;try{await commit();}finally{PENDING_DEL.delete(key);load(true);}};
+  t.querySelector('.tact').onclick=()=>{if(done)return;done=true;clearTimeout(t._t);PENDING_DEL.delete(key);t.hidden=true;toast('Restored','ok');load(true);};
+  t._t=setTimeout(fin,6000);load(true);}
 function toast(m,kind){const t=$('toast');t.innerHTML=ic(kind==='err'?'x':kind==='ok'?'check':'bell')+'<span>'+esc(m)+'</span>';t.className='toast'+(kind?' '+kind:'');t.hidden=false;clearTimeout(t._t);t._t=setTimeout(()=>t.hidden=true,3400);}
 function lsGet(k){try{return localStorage.getItem(k);}catch(e){return null;}}
 function lsSet(k,v){try{localStorage.setItem(k,v);}catch(e){}}
@@ -1071,15 +1178,16 @@ async function load(force){
       db.from('studio_settings').select('*'),
       db.from('messages').select('*').order('created_at',{ascending:false}).limit(30)]);
     if(r[0].error) throw r[0].error;
-    const next={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[]),comments:r[8].error?[]:(r[8].data||[]),settings:r[9].error?null:Object.fromEntries((r[9].data||[]).map(x=>[x.key,x.value])),messages:r[10].error?[]:(r[10].data||[]).slice().sort((x,y)=>String(x.created_at).localeCompare(String(y.created_at)))};
+    const next0={agents:r[0].data||[],projects:r[1].data||[],prospects:r[2].data||[],leads:r[3].error?[]:(r[3].data||[]),quotes:r[4].error?[]:(r[4].data||[]),needs:r[5].data||[],events:r[6].data||[],tasks:r[7].error?[]:(r[7].data||[]),comments:r[8].error?[]:(r[8].data||[]),settings:r[9].error?null:Object.fromEntries((r[9].data||[]).map(x=>[x.key,x.value])),messages:r[10].error?[]:(r[10].data||[]).slice().sort((x,y)=>String(x.created_at).localeCompare(String(y.created_at)))};
+    const next=next0;for(const k of ['leads','quotes','agents','tasks'])next[k]=(next[k]||[]).filter(x=>!PENDING_DEL.has(k+':'+x.id));
     TASKS_OK=!r[7].error;
     if(seq!==LOADSEQ)return;
     lastSync=Date.now();tickSync();
     const sig=JSON.stringify(next)+'|'+Math.floor(Date.now()/60000);
     if(!force&&sig===lastSig)return;
-    lastSig=sig;S=next;renderAll();tickSync();
+    lastSig=sig;S=next;renderAll();tickSync();if(document.body.classList.contains('loading')){document.body.classList.remove('loading');$('loadSr').textContent='';}
     if(firstPaint){const m=location.hash.match(/^#\/project\/(.+)$/);if(m){const p=S.projects.find(x=>x.id===m[1]);if(p)openProject(p);}}firstPaint=false;
-  }catch(e){console.error(e);setConn(false,'Connection lost');}
+  }catch(e){console.error(e);setConn(false,'Connection lost');document.body.classList.remove('loading');}
 }
 function tickSync(){if(!lastSync)return;const s=Math.round((Date.now()-lastSync)/1000);setConn(true,(SET('paused')?'Studio paused · ':'Live · ')+'synced '+(s<5?'now':s+'s ago'));$('conn').classList.toggle('paused',!!SET('paused'));}
 setInterval(tickSync,5000);
@@ -1096,10 +1204,14 @@ function renderAll(){
   document.body.classList.toggle('alive',S.agents.some(a=>a.status==='working'));
   renderCounts();renderHello();renderOverview();renderFloor();renderPipeline();renderQuotes();renderProjects();renderProspects();renderThread();refreshProjectDrawer();
 }
-function renderCounts(){
+function renderCounts(){if(typeof paintTelegram==='function'&&$('sModal').classList.contains('open'))paintTelegram();
   const openLeads=S.leads.filter(l=>l.stage!=='won'&&l.stage!=='lost').length,qOut=S.quotes.filter(q=>q.status==='pending'||q.status==='sent').length,
     pAct=S.projects.filter(isActive).length,pr=S.prospects.filter(x=>(x.status||'new')==='new').length;
-  $('nPipe').textContent=openLeads||'';$('nQuotes').textContent=qOut||'';$('nProj').textContent=pAct||'';$('nPros').textContent=pr||'';
+  $('nPipe').textContent=openLeads||'';$('nQuotes').textContent=qOut||'';$('nProj').textContent=pAct||'';$('nPros').textContent='';
+  // red = waiting on you: tasks for your review/answer + project questions; prospects to review
+  const pWait=S.tasks.filter(t=>['needs_you','review'].includes(t.status)).length+S.needs.length;
+  const setA=(id,n,what)=>{const e=$(id);e.textContent=n||'';e.hidden=!n;e.setAttribute('aria-label',n?n+' '+what:'');};
+  setA('aProj',pWait,'waiting on you');setA('aPros',pr,'to review');
   const n=S.needs.length+blockedTasks().length;$('needsPill').hidden=!n;$('needsPill').innerHTML=ic('bell','sm')+'<b>'+n+'</b><span class="nlong"> waiting on you</span>';$('needsPill').setAttribute('aria-label',n+' waiting on you');
 }
 function renderHello(){
@@ -1111,7 +1223,8 @@ function renderHello(){
   const bits=[];bits.push(needs?`${needs} thing${needs>1?'s':''} need${needs>1?'':'s'} you`:'Nothing needs you right now');
   bits.push(working?`${working} agent${working>1?'s':''} working`:'the team is idle');bits.push(`${act} active project${act===1?'':'s'}`);bits.push(`${open} open lead${open===1?'':'s'}`);
   $('summary').textContent=bits.join(' · ')+'.';const rs=runnerState();$('summary').insertAdjacentHTML('beforeend',`<br><span class="meta"><span style="color:${rs.on?'var(--green)':'var(--amber)'}">●</span> ${esc(rs.txt)}</span>`);
-  try{$('when').textContent=new Date().toLocaleDateString('en-GB',{timeZone:'Africa/Tunis',weekday:'long',day:'numeric',month:'long'})+' · '+new Date().toLocaleTimeString('en-GB',{timeZone:'Africa/Tunis',hour:'2-digit',minute:'2-digit'})+' Tunis';}catch(e){}
+  const loc=lsGet('ts_lang')==='ar'?'ar-TN':'en-GB';
+  try{$('when').textContent=new Date().toLocaleDateString(loc,{timeZone:'Africa/Tunis',weekday:'long',day:'numeric',month:'long'})+' · '+new Date().toLocaleTimeString(loc,{timeZone:'Africa/Tunis',hour:'2-digit',minute:'2-digit'})+(loc==='ar-TN'?' تونس':' Tunis');}catch(e){}
 }
 setInterval(()=>{if(!$('app').hidden)renderHello();},30000);
 
@@ -1245,9 +1358,8 @@ $('lform').addEventListener('submit',async e=>{e.preventDefault();
   const res=editingLead?await db.from('leads').update(row).eq('id',editingLead.id):await db.from('leads').insert(row);
   if(res.error){$('lMsg').className='formmsg err';$('lMsg').textContent="Couldn't save: "+res.error.message;return;}
   if(!editingLead)await logEvent('lead_created','Lead added: '+row.company);closeModals();toast(editingLead?'Lead saved':'Lead added','ok');load(true);});
-$('lDelete').addEventListener('click',async()=>{const b=$('lDelete');if(!editingLead)return;
-  if(!b.dataset.c){b.dataset.c='1';b.innerHTML=btnHtml('trash','Tap again to delete');return;}
-  const {error}=await db.from('leads').delete().eq('id',editingLead.id);if(error){toast("Couldn't delete: "+error.message,'err');return;}closeModals();toast('Lead deleted');load(true);});
+$('lDelete').addEventListener('click',()=>{if(!editingLead)return;const l=editingLead;closeModals();
+  undoable('Lead deleted: '+l.company,'leads:'+l.id,async()=>{const {error}=await db.from('leads').delete().eq('id',l.id);if(error)toast("Couldn't delete: "+error.message,'err');else await logEvent('lead_deleted','Lead deleted: '+l.company);});});
 
 /* ---------- quotes ---------- */
 function renderQuotes(){
@@ -1264,8 +1376,7 @@ function renderQuotes(){
       if(error){toast("Couldn't update: "+error.message,'err');return;}await logEvent('quote_status',`${q.qnum} marked ${st}`);
       toast(st==='accepted'&&!q.project_id?'Accepted. A Delivery project was created.':'Quote marked '+Q_STATUS[st],'ok');load(true);};
     d.querySelector('[data-a=pdf]').onclick=()=>exportPdf(q);
-    const del=d.querySelector('[data-a=del]');del.onclick=async()=>{if(!del.dataset.c){del.dataset.c='1';del.innerHTML=btnHtml('trash','Tap again');setTimeout(()=>{del.dataset.c='';del.innerHTML=btnHtml('trash','Delete');},2600);return;}
-      const {error}=await db.from('quotes').delete().eq('id',q.id);if(error){toast("Couldn't delete: "+error.message,'err');return;}toast('Quote deleted');load(true);};
+    const del=d.querySelector('[data-a=del]');del.onclick=()=>undoable('Quote deleted: '+(q.qnum||''),'quotes:'+q.id,async()=>{const {error}=await db.from('quotes').delete().eq('id',q.id);if(error)toast("Couldn't delete: "+error.message,'err');});
     host.appendChild(d);});
 }
 let Q=null;
@@ -1423,7 +1534,7 @@ function openAgent(a){
   const dd=drawer;
   dd.querySelector('#agEdit').onclick=()=>{const fm=dd.querySelector('#agEditForm');fm.hidden=!fm.hidden;if(!fm.hidden)dd.querySelector('#agName').focus();};
   dd.querySelector('#agFreeze').onclick=async e=>{e.currentTarget.disabled=true;const {error}=await db.from('agents').update({frozen:!a.frozen}).eq('id',a.id);const m=dd.querySelector('#agMsg');if(error){m.className='formmsg err';m.textContent="Couldn't update: "+error.message+(/frozen|column/i.test(error.message)?' - run the agent-controls DB migration first.':'');e.currentTarget.disabled=false;return;}await logEvent('agent_freeze',(a.frozen?'Unfroze ':'Froze ')+roleOf(a));toast(a.frozen?roleOf(a)+' unfrozen':roleOf(a)+' frozen','ok');closeDrawer();load(true);};
-  const delb=dd.querySelector('#agDel');if(delb)delb.onclick=async e=>{const b=e.currentTarget;if(!b.dataset.c){b.dataset.c='1';b.innerHTML=btnHtml('trash','Tap again to delete');setTimeout(()=>{if(b.isConnected){b.dataset.c='';b.innerHTML=btnHtml('trash','Delete');}},3000);return;}b.disabled=true;const {error}=await db.from('agents').delete().eq('id',a.id);const m=dd.querySelector('#agMsg');if(error){m.className='formmsg err';m.textContent="Couldn't delete: "+error.message;b.disabled=false;return;}await logEvent('agent_deleted','Deleted agent '+roleOf(a));toast(roleOf(a)+' deleted');closeDrawer();load(true);};
+  const delb=dd.querySelector('#agDel');if(delb)delb.onclick=async e=>{const b=e.currentTarget;closeDrawer();undoable(roleOf(a)+' deleted','agents:'+a.id,async()=>{const {error}=await db.from('agents').delete().eq('id',a.id);if(error)toast("Couldn't delete: "+error.message,'err');else await logEvent('agent_deleted','Deleted agent '+roleOf(a));});};
   dd.querySelector('#agEditForm').onsubmit=async e=>{e.preventDefault();const row={persona_name:dd.querySelector('#agName').value.trim()||null,bio:dd.querySelector('#agBio').value.trim()||null,level:Number(dd.querySelector('#agLevel').value)};const {error}=await db.from('agents').update(row).eq('id',a.id);const m=dd.querySelector('#agMsg');if(error){m.className='formmsg err';m.textContent="Couldn't save: "+error.message;return;}await logEvent('agent_edited','Edited '+roleOf(a));toast('Agent updated','ok');closeDrawer();load(true);};
 }
 /* ---------- project page ---------- */
@@ -1509,9 +1620,10 @@ async function loadFiles(p){const {data,error}=await db.from('project_files').se
     dv.innerHTML=ok?`<a href="${esc(r.data.signedUrl)}" target="_blank" rel="noopener">${ic('clip','sm')} ${esc(file.name)}</a><span class="meta">${file.size?Math.max(1,Math.round(file.size/1024))+' KB':''}</span>`
       :`<span class="fmiss">${ic('alert','sm')} ${esc(file.name)}</span><span class="flag">Missing, re-upload it</span>`;
     if(!p.archived_at){const x=document.createElement('button');x.className='btn danger sm';x.type='button';x.setAttribute('aria-label','Remove '+file.name);x.innerHTML=ic('trash');
-      x.onclick=async()=>{if(!x.dataset.c){x.dataset.c='1';x.innerHTML=btnHtml('trash','Tap again');setTimeout(()=>{if(x.isConnected){x.dataset.c='';x.innerHTML=ic('trash');}},3000);return;}
-        x.disabled=true;if(ok)await db.storage.from(BUCKET).remove([file.path]);const d=await db.from('project_files').delete().eq('path',file.path);
-        if(d.error){x.disabled=false;toast("Couldn't remove: "+d.error.message,'err');return;}await logEvent('file_removed','File removed: '+file.name,p.id);toast('File removed','ok');loadFiles(p);};
+      x.onclick=()=>{dv.hidden=true;const t=$('toast');clearTimeout(t._t);t.innerHTML=ic('trash')+'<span>File removed: '+esc(file.name)+'</span><button type="button" class="tact">Undo</button>';t.className='toast';t.hidden=false;
+        let done=false;t.querySelector('.tact').onclick=()=>{if(done)return;done=true;clearTimeout(t._t);t.hidden=true;dv.hidden=false;toast('Restored','ok');};
+        t._t=setTimeout(async()=>{if(done)return;done=true;t.hidden=true;if(ok)await db.storage.from(BUCKET).remove([file.path]);const d=await db.from('project_files').delete().eq('path',file.path);
+          if(d.error){dv.hidden=false;toast("Couldn't remove: "+d.error.message,'err');return;}await logEvent('file_removed','File removed: '+file.name,p.id);loadFiles(p);},6000);};
       dv.appendChild(x);}
     if($('dFiles')===fl)fl.appendChild(dv);}
   if(!p.archived_at&&$('dFiles')===fl){const w=document.createElement('div');w.className='fadd';
@@ -1531,7 +1643,7 @@ async function deleteProject(p,typed,btn){const m=$('dzMsg');btn.disabled=true;m
 function renderPTasks(p,box){
   if(!TASKS_OK){box.innerHTML=`<div class="d-note" style="margin-top:14px">Tasks need the database update (build5.sql). Run it in Supabase, then refresh.</div>`;return;}
   const ts=tasksOf(p.id),man=MANUAL()&&!p.archived_at;
-  box.innerHTML=`<p class="d-note" style="margin:16px 0;font-size:.86rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment, and approve deliverables.'}</p>${ts.length?`<div class="segc" id="taskTabs" role="group" aria-label="Task view" style="margin:2px 0 14px">${[['active','In progress',ts.filter(x=>x.status!=='done').length],['done','Done',ts.filter(x=>x.status==='done').length]].map(o=>`<button type="button" data-tt="${o[0]}" aria-pressed="${PTASKTAB===o[0]}">${o[1]}${o[2]?(o[0]==='active'?`<span class="cnt" aria-hidden="true">${o[2]}</span><span class="sr"> (${o[2]})</span>`:' · '+o[2]):''}</button>`).join('')}</div>`:''}<div id="tList"></div>
+  box.innerHTML=`<p class="d-note" style="margin:16px 0;font-size:.86rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment, and approve deliverables.'}</p>${ts.length?`<div class="segc" id="taskTabs" role="group" aria-label="Task view" style="margin:2px 0 14px">${[['active','In progress',ts.filter(x=>x.status!=='done').length],['done','Done',ts.filter(x=>x.status==='done').length]].map(o=>`<button type="button" data-tt="${o[0]}" aria-pressed="${PTASKTAB===o[0]}">${o[1]}${o[2]?(o[0]==='active'?`<span class="cnt" aria-hidden="true">${o[2]}</span><span class="sr"> (${o[2]})</span>`:`<span class="cnt muted" aria-hidden="true">${o[2]}</span><span class="sr"> (${o[2]})</span>`):''}</button>`).join('')}</div>`:''}<div id="tList"></div>
     ${!man?'':`<div class="d-sec">Add a task</div><form class="addtask" id="tAdd" style="grid-template-columns:1fr auto auto auto"><input type="text" id="tTitle" placeholder="e.g. Booking flow wireframes" aria-label="Task title" required>
       <select id="tStage" aria-label="Stage">${T_STAGES.map(x=>`<option>${x}</option>`).join('')}</select><select id="tAgent" aria-label="Assign to">${agentOpts('')}</select><button class="btn sm" type="submit">${btnHtml('plus','Add')}</button></form>`}`;
   const list=$('tList');
@@ -1573,8 +1685,7 @@ function renderPTasks(p,box){
         for(let n=0;n<order.length;n++)if(order[n].sort!==n){const r=await db.from('tasks').update({sort:n}).eq('id',order[n].id);if(r.error){toast("Couldn't move: "+r.error.message,'err');return;}}
         await logEvent('task_moved',`Manual: moved ${t.title} ${k<0?'up':'down'}`,p.id);load(true);};
       d.querySelector('[data-up]').onclick=()=>swap(-1);d.querySelector('[data-dn]').onclick=()=>swap(1);
-      const del=d.querySelector('[data-del]');del.onclick=async()=>{if(!del.dataset.c){del.dataset.c='1';del.innerHTML=btnHtml('trash','Tap again');setTimeout(()=>{if(del.isConnected){del.dataset.c='';del.innerHTML=ic('trash');}},3000);return;}
-        const {error}=await db.from('tasks').delete().eq('id',t.id);if(error){toast("Couldn't delete: "+error.message,'err');return;}await logEvent('task_deleted','Manual: task removed: '+t.title,p.id);load(true);};}
+      const del=d.querySelector('[data-del]');del.onclick=()=>undoable('Task removed: '+t.title,'tasks:'+t.id,async()=>{const {error}=await db.from('tasks').delete().eq('id',t.id);if(error)toast("Couldn't delete: "+error.message,'err');else await logEvent('task_deleted','Manual: task removed: '+t.title,p.id);});}
     list.appendChild(d);});
   const f=$('tAdd');if(f)f.onsubmit=async e=>{e.preventDefault();const title=$('tTitle').value.trim();if(!title)return;const agent=$('tAgent').value||null,stage=$('tStage').value;
     const {error}=await db.from('tasks').insert({project_id:p.id,title,agent,stage,sort:ts.length});if(error){toast("Couldn't add: "+error.message,'err');return;}
@@ -1654,6 +1765,12 @@ const mscrim=$('mscrim');let lastFocus=null;
 function openModal(id,focusId){lastFocus=document.activeElement;closeDrawer();closeMenu();const m=$(id);m.classList.add('open');m.setAttribute('aria-hidden','false');mscrim.classList.add('open');const f=focusId?$(focusId):m.querySelector('input,select,textarea,button');if(f)setTimeout(()=>f.focus(),60);}
 function closeModals(){document.querySelectorAll('.modal.open').forEach(m=>{m.classList.remove('open');m.setAttribute('aria-hidden','true');});mscrim.classList.remove('open');if(lastFocus&&lastFocus.focus)lastFocus.focus();}
 mscrim.addEventListener('click',closeModals);document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',closeModals));
+document.addEventListener('keydown',e=>{if(e.key!=='Tab')return;
+  const box=document.querySelector('.modal.open')||(drawer.classList.contains('open')?drawer:null);if(!box)return;
+  const f=[...box.querySelectorAll('a[href],button:not([disabled]),input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')].filter(x=>x.offsetParent!==null||x===document.activeElement);
+  if(!f.length)return;const first=f[0],last=f[f.length-1];
+  if(!box.contains(document.activeElement)){e.preventDefault();first.focus();return;}
+  if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(!document.querySelector('.modal.open')&&SIDE&&onProject()){closeSide();return;}const pop=document.querySelector('.menu-pop');if(pop){pop.remove();return;}if(!$('umenu').hidden)closeMenu(true);else if(document.querySelector('.modal.open'))closeModals();else closeDrawer();}});
 
 /* project modal + map */
@@ -1703,7 +1820,7 @@ function openSettings(section){
   $('sName').value=USER.name;$('sTitle').value=USER.title;const hrs=[...Array(25).keys()].map(h=>`<option value="${h}">${h===24?'24:00 (midnight)':String(h).padStart(2,'0')+':00'}</option>`).join('');$('sHoursS').innerHTML=hrs;$('sHoursE').innerHTML=hrs;$('sHoursS').value=String(SET('hours_start'));$('sHoursE').value=String(SET('hours_end'));$('sCheck').value=String(SET('check_minutes'));$('sMaxRun').value=String(SET('max_run_minutes'));$('sStall').value=String(stallH());$('sPaused').checked=!!SET('paused');$('sApproval').value=SET('approval');$('sMaxTasks').value=String(SET('max_tasks_per_run'));$('sManual').checked=MANUAL();$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
   $('sEmail').value='';$('sPass').value='';$('sPass2').value='';['sMsgProfile','sMsgEmail','sMsgPass'].forEach(id=>{$(id).textContent='';$(id).className='formmsg';});
   openModal('sModal',section==='email'?'sEmail':section==='password'?'sPass':'sName');
-  setGroup(section==='email'||section==='password'?'security':section==='profile'?'profile':'studio');paintPause();$('sMsgStudio').textContent='';
+  setGroup(section==='email'||section==='password'?'security':section==='profile'?'profile':'studio');paintPause();paintTelegram();$('sMsgStudio').textContent='';
 }
 function sMsg(id,t,k){$(id).className='formmsg'+(k?' '+k:'');$(id).textContent=t;if(k==='ok')toast(t,'ok');else if(k==='err')toast(t,'err');}
 function setGroup(g){document.querySelectorAll('#sModal .set-sec').forEach(x=>{x.hidden=x.dataset.g!==g;x.classList.remove('first');});
@@ -1765,6 +1882,68 @@ db.auth.onAuthStateChange((evt,s)=>{
   if(s&&s.user)applyUser(s.user);
   if(evt==='PASSWORD_RECOVERY'){showLogin();$('pwForm').hidden=true;$('newPwForm').hidden=false;loginMsg('');return;}
   if(s&&$('newPwForm').hidden)showApp();else if(!s)showLogin();});
+
+/* ---------- global search ---------- */
+$('sIco').innerHTML=ic('search','sm');
+function searchItems(q){q=q.toLowerCase().trim();if(q.length<2)return [];const hit=x=>String(x||'').toLowerCase().includes(q),out=[];
+  S.projects.forEach(p=>{if(hit(p.name)||hit(p.client)||hit(p.brief))out.push({k:'Project',t:p.name,sub:P_STATUS[p.status]||'',go:()=>openProject(p)});});
+  S.tasks.forEach(t=>{if(hit(t.title)){const p=S.projects.find(x=>x.id===t.project_id);if(p)out.push({k:'Task',t:t.title,sub:p.name+' · '+(T_STATUS[t.status]||''),go:()=>openProject(p)});}});
+  S.leads.forEach(l=>{if(hit(l.company)||hit(l.contact))out.push({k:'Lead',t:l.company,sub:l.stage||'',go:()=>{showTab('pipeline');openLead(l);}});});
+  S.quotes.forEach(x=>{if(hit(x.qnum)||hit(x.client))out.push({k:'Quote',t:(x.qnum||'Quote')+(x.client?' · '+x.client:''),sub:x.status||'',go:()=>showTab('quotes')});});
+  S.prospects.forEach(x=>{if(hit(x.name))out.push({k:'Prospect',t:x.name,sub:x.category||'',go:()=>showTab('prospects')});});
+  S.agents.forEach(a=>{if(hit(roleOf(a))||hit(a.slug))out.push({k:'Agent',t:roleOf(a),sub:A_STATUS[a.status]||'',go:()=>{showTab('floor');}});});
+  return out.slice(0,24);}
+function closeSearch(){$('gRes').hidden=true;$('gSearch').setAttribute('aria-expanded','false');}
+$('gSearch').addEventListener('input',()=>{const q=$('gSearch').value,res=$('gRes'),items=searchItems(q);
+  if(q.trim().length<2){closeSearch();return;}
+  res.innerHTML=items.length?items.map((x,i)=>`<button type="button" data-i="${i}"><span class="k">${esc(x.k)}</span><b>${esc(x.t)}</b>${x.sub?`<span class="meta">${esc(x.sub)}</span>`:''}</button>`).join(''):'<div class="none">No results.</div>';
+  res.hidden=false;$('gSearch').setAttribute('aria-expanded','true');
+  res.querySelectorAll('button').forEach(b=>b.onclick=()=>{const it=items[+b.dataset.i];closeSearch();$('gSearch').value='';it.go();});});
+$('gSearch').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){const b=$('gRes').querySelector('button');if(b){e.preventDefault();b.focus();}}else if(e.key==='Escape'){$('gSearch').value='';closeSearch();}
+  else if(e.key==='Enter'){const b=$('gRes').querySelector('button');if(b){e.preventDefault();b.click();}}});
+$('gRes').addEventListener('keydown',e=>{const bs=[...$('gRes').querySelectorAll('button')],i=bs.indexOf(document.activeElement);
+  if(e.key==='ArrowDown'&&i<bs.length-1){e.preventDefault();bs[i+1].focus();}else if(e.key==='ArrowUp'){e.preventDefault();(i>0?bs[i-1]:$('gSearch')).focus();}else if(e.key==='Escape'){closeSearch();$('gSearch').focus();}});
+document.addEventListener('click',e=>{if(!e.target.closest('.hsearch'))closeSearch();});
+document.addEventListener('keydown',e=>{if(e.key==='/'&&!/input|textarea|select/i.test(document.activeElement.tagName)&&!document.querySelector('.modal.open')){e.preventDefault();$('gSearch').focus();}});
+
+/* ---------- appearance + language ---------- */
+function applyTheme(){const t=lsGet('ts_theme')||'system',mq=window.matchMedia?matchMedia('(prefers-color-scheme: dark)'):null,dark=t==='dark'||(t==='system'&&mq&&mq.matches);
+  document.documentElement.dataset.theme=dark?'dark':'light';$('glass-colors').disabled=dark;
+  document.querySelectorAll('#sTheme button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===t)));}
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if((lsGet('ts_theme')||'system')==='system')applyTheme();});
+document.querySelectorAll('#sTheme button').forEach(b=>b.onclick=()=>{lsSet('ts_theme',b.dataset.v);applyTheme();toast(b.dataset.v==='system'?'Appearance follows your device':'Appearance: '+b.textContent,'ok');});
+const LANG=lsGet('ts_lang')||'en';
+document.querySelectorAll('#sLang button').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.v===LANG));b.onclick=()=>{if(b.dataset.v===LANG)return;lsSet('ts_lang',b.dataset.v);location.reload();};});
+applyTheme();
+
+/* ---------- Telegram status (reported by the runner every 5 minutes) ---------- */
+function paintTelegram(){const hb=SET('runner_heartbeat'),line=$('tgLine');if(!line)return;const tg=hb&&hb.telegram;
+  const age=hb&&hb.at?Math.round((Date.now()-new Date(hb.at))/60000):null;
+  line.classList.toggle('on',tg==='on');
+  $('tgTxt').textContent=!hb?'The studio computer has not reported yet.':tg==='on'?`Connected · checked ${age<1?'just now':age+' min ago'}`:tg==='off'?'Not set up on the studio computer. Run: node studio/runner/notify.mjs setup':'Status unknown: update the studio computer (git pull).';
+  const req=SET('telegram_test');$('tgTest').innerHTML=btnHtml('send',req&&Date.now()-new Date(req)<10*60000?'Test requested':'Send a test');}
+$('tgTest').onclick=async()=>{if(!S.settings)return toast('Studio controls need the database update first.','err');
+  const r=await db.from('studio_settings').upsert({key:'telegram_test',value:new Date().toISOString(),updated_at:new Date().toISOString()});
+  if(r.error)return toast("Couldn't request a test: "+r.error.message,'err');toast('Test requested. It arrives on Telegram within 5 minutes.','ok');load(true);};
+const AR_DICT={"Overview": "نظرة عامة", "Floor": "الفريق", "Projects": "المشاريع", "Prospects": "العملاء المحتملون", "Pipeline": "المبيعات", "Quotes": "عروض الأسعار", "Studio": "الاستوديو", "Growth": "النمو", "Tekydis Studio OS": "نظام استوديو تيكيديس", "Things waiting on you": "أمور بانتظارك", "Waiting on you": "بانتظارك", "waiting on you": "بانتظارك", "All": "الكل", "Ongoing": "جارية", "Delivered": "مُسلَّمة", "New project": "مشروع جديد", "New lead": "عميل جديد", "New quote": "عرض سعر جديد", "Needs you": "تحتاجك", "In progress": "قيد التنفيذ", "Drafts": "مسودات", "On hold": "متوقفة", "Done": "منجزة", "Archive": "الأرشيف", "Draft": "مسودة", "Sent to studio": "أُرسلت للاستوديو", "Queued": "في الانتظار", "In review": "قيد المراجعة", "To do": "للتنفيذ", "Working": "يعمل", "Waiting for your review": "بانتظار مراجعتك", "Stuck": "متعثرة", "Idle": "متاح", "Waiting on a teammate": "بانتظار زميل", "In a meeting": "في اجتماع", "Open": "مفتوحة", "Won": "مكسوبة", "Lost": "خاسرة", "To review": "للمراجعة", "Approved": "مقبولة", "Rejected": "مرفوضة", "Approve": "اعتماد", "Reject": "رفض", "Request changes": "طلب تعديلات", "Answer": "إجابة", "Send": "إرسال", "Cancel": "إلغاء", "Close": "إغلاق", "Save": "حفظ", "Save changes": "حفظ التغييرات", "Saving…": "جارٍ الحفظ…", "Saved": "تم الحفظ", "Delete": "حذف", "Edit": "تعديل", "Back": "رجوع", "Undo": "تراجع", "Restored": "تمت الاستعادة", "Download": "تنزيل", "Details": "التفاصيل", "Add": "إضافة", "Add files": "إضافة ملفات", "Mark done": "وضع كمنجز", "Settings": "الإعدادات", "Studio controls": "إعدادات الاستوديو", "Profile": "الملف الشخصي", "Login & security": "الدخول والأمان", "Change login email": "تغيير بريد الدخول", "Change password": "تغيير كلمة المرور", "Sign out": "تسجيل الخروج", "Sign out everywhere": "تسجيل الخروج من كل الأجهزة", "Sessions": "الجلسات", "Pause the studio": "إيقاف الاستوديو مؤقتًا", "Approvals and limits": "الموافقات والحدود", "Working hours": "ساعات العمل", "Alerts": "التنبيهات", "Advanced": "متقدم", "Manual control": "تحكم يدوي", "Telegram alerts": "تنبيهات تيليجرام", "Send a test": "إرسال تجربة", "Test requested": "طُلبت التجربة", "Display": "العرض", "Appearance": "المظهر", "Language": "اللغة", "System": "حسب الجهاز", "Light": "فاتح", "Dark": "داكن", "Deliverables that need your approval": "المخرجات التي تحتاج موافقتك", "Every deliverable": "كل المخرجات", "Design and build only": "التصميم والتطوير فقط", "None (the CEO decides)": "لا شيء (يقرر المدير التنفيذي)", "Max tasks per run": "أقصى عدد مهام في كل دورة", "Studio works from": "يعمل الاستوديو من", "until": "حتى", "Check the board every": "مراجعة اللوحة كل", "Stop a run after": "إيقاف الدورة بعد", "Flag a silent task as stuck after": "اعتبار المهمة متعثرة بعد صمت", "5 minutes": "5 دقائق", "10 minutes": "10 دقائق", "15 minutes": "15 دقيقة", "30 minutes": "30 دقيقة", "1 hour": "ساعة", "2 hours": "ساعتان", "3 hours": "3 ساعات", "4 hours": "4 ساعات", "8 hours": "8 ساعات", "24 hours": "24 ساعة", "Name": "الاسم", "Position": "المنصب", "Save profile": "حفظ الملف", "Login email": "بريد الدخول", "New email": "البريد الجديد", "Send confirmation": "إرسال التأكيد", "Password": "كلمة المرور", "New password": "كلمة المرور الجديدة", "Repeat it": "أعد كتابتها", "Update password": "تحديث كلمة المرور", "Save password": "حفظ كلمة المرور", "How you appear across the studio.": "كيف تظهر في الاستوديو.", "At least 8 characters. You stay signed in on this device.": "8 أحرف على الأقل. تبقى مسجلًا على هذا الجهاز.", "Signs you out on every phone and computer, including this one.": "يسجل خروجك من كل الهواتف والحواسيب، بما فيها هذا الجهاز.", "The CEO reads these before every run. Change them any time.": "يقرأها المدير التنفيذي قبل كل دورة. غيّرها متى شئت.", "Message the CEO": "راسل المدير التنفيذي", "Recent activity": "آخر النشاطات", "Active projects": "المشاريع النشطة", "Pipeline by stage": "المبيعات حسب المرحلة", "Project": "المشروع", "Project name": "اسم المشروع", "Project type": "نوع المشروع", "Client": "العميل", "Service": "الخدمة", "Due": "الموعد", "Brief": "الوصف", "Delivery": "تسليم", "Prospecting": "بحث عن عملاء", "Send to the studio": "إرسال إلى الاستوديو", "Save as draft": "حفظ كمسودة", "Files (optional)": "ملفات (اختياري)", "Client details (optional)": "بيانات العميل (اختياري)", "Build or deliver something": "تنفيذ أو تسليم عمل", "Find business opportunities": "إيجاد فرص عمل", "Open deliverable": "فتح المخرج", "Make client version (PDF)": "نسخة للعميل (PDF)", "Company": "الشركة", "Contact": "جهة الاتصال", "Email": "البريد", "Stage": "المرحلة", "Value": "القيمة", "Est. value": "القيمة التقديرية", "Next step": "الخطوة التالية", "Notes": "ملاحظات", "Save lead": "حفظ العميل", "Quote": "عرض سعر", "Subtotal": "المجموع الفرعي", "VAT": "الضريبة", "Currency": "العملة", "Type": "النوع", "Tier": "الفئة", "Months": "الأشهر", "Deposit": "العربون", "Location": "الموقع", "Radius": "النطاق", "Categories": "الفئات", "Car rental": "تأجير سيارات", "Restaurants": "مطاعم", "Cafés": "مقاهٍ", "Hotels": "فنادق", "Real estate": "عقارات", "Clinics": "عيادات", "Beauty & spa": "تجميل وسبا", "Shops": "متاجر", "Sign in": "تسجيل الدخول", "Forgot password?": "نسيت كلمة المرور؟", "Email me a login link instead": "أرسل لي رابط دخول بالبريد", "Use my password instead": "استخدم كلمة المرور", "Send login link": "إرسال رابط الدخول", "Your AI studio's control room.": "غرفة التحكم في استوديو الذكاء الاصطناعي.", "Loading the studio…": "جارٍ تحميل الاستوديو…", "Connecting…": "جارٍ الاتصال…", "No results.": "لا نتائج.", "Search projects, tasks, leads…": "ابحث في المشاريع والمهام والعملاء…", "Search the studio (press / )": "البحث في الاستوديو (اضغط / )", "Working late": "سهرة عمل","Working late,":"سهرة عمل،","Nothing needs you right now":"لا شيء بانتظارك الآن","the team is idle":"الفريق متاح","Runner online":"المشغّل متصل",
+"checked just now":"آخر فحص الآن","Studio runner not set up yet":"مشغّل الاستوديو غير مُعدّ بعد","Paused":"متوقف","Outside studio hours":"خارج ساعات العمل","Idle · nothing to do":"متاح · لا عمل", "Good morning,": "صباح الخير،", "Good afternoon,": "مساء الخير،", "Good evening,": "مساء الخير،", "Good evening.": "مساء الخير.", "Nothing in this filter.": "لا شيء في هذا التصنيف.", "Nothing here for this type.": "لا شيء هنا لهذا النوع.", "The archive is empty.": "الأرشيف فارغ.", "No projects yet. Write a brief and the CEO assigns the team.": "لا مشاريع بعد. اكتب وصفًا وسيعيّن المدير التنفيذي الفريق.", "Lead": "عميل", "Task": "مهمة", "Agent": "وكيل", "Prospect": "عميل محتمل", "Nothing changed: these are already saved.": "لم يتغير شيء: هذه الإعدادات محفوظة.", "Studio paused. No agent starts any work.": "تم إيقاف الاستوديو. لن يبدأ أي وكيل عملًا.", "Studio running. The CEO picks up work within a few minutes.": "الاستوديو يعمل. سيستأنف المدير التنفيذي العمل خلال دقائق.", "Message sent to the CEO": "أُرسلت الرسالة إلى المدير التنفيذي", "Lessons learned": "الدروس المستفادة", "Manage agent": "إدارة الوكيل", "Freeze": "تجميد", "Unfreeze": "إلغاء التجميد", "Frozen": "مجمّد", "CEO": "المدير التنفيذي", "Product Manager": "مدير المنتج", "UX Researcher": "باحث تجربة المستخدم", "Senior Product Designer": "مصمم منتجات أول", "UI Designer": "مصمم واجهات", "Brand Designer": "مصمم هوية", "Content Writer": "كاتب محتوى", "QA & Accessibility": "الجودة وإتاحة الوصول", "Front-end Developer": "مطور واجهات", "Back-end Developer": "مطور خوادم", "Database Engineer": "مهندس قواعد بيانات", "Prospector": "باحث عملاء", "Marketer": "مسوّق", "Sales / BD": "المبيعات وتطوير الأعمال", "Financer": "المالية"};
+
+const AR_RX=[[/^(\d+) waiting on you$/,m=>m[1]+' بانتظارك'],[/^(\d+)\/(\d+) tasks · (\d+)%$/,m=>`${m[1]}/${m[2]} مهام · ${m[3]}%`],[/^(\d+)% · (\d+)\/(\d+) tasks$/,m=>`${m[1]}% · ${m[2]}/${m[3]} مهام`],
+  [/^Archive \((\d+)\)$/,m=>`الأرشيف (${m[1]})`],[/^Live · synced (.+)$/,m=>'متصل · '+m[1].replace('now','الآن').replace(/(\d+)s ago/,'منذ $1 ث')],[/^Studio paused · synced (.+)$/,m=>'الاستوديو متوقف · '+m[1].replace('now','الآن').replace(/(\d+)s ago/,'منذ $1 ث')],
+  [/^Now: #(\d+)(.*)$/,m=>'الآن: #'+m[1]+m[2]],[/^(\d+) things? needs? you$/,m=>m[1]+' بانتظارك'],[/^(\d+) agents? working$/,m=>m[1]+' وكلاء يعملون'],
+  [/^(\d+) active projects?$/,m=>m[1]+' مشاريع نشطة'],[/^(\d+) open leads?$/,m=>m[1]+' عملاء مفتوحون'],[/^checked (\d+) min ago$/,m=>'آخر فحص منذ '+m[1]+' د'],[/^Working · (.*)$/,m=>'يعمل · '+m[1]],[/^ \((\d+) ongoing\)$/,m=>` (${m[1]} جارية)`],[/^Connected · checked (.+)$/,m=>'متصل · آخر فحص '+m[1].replace('just now','الآن').replace(/(\d+) min ago/,'منذ $1 د')]];
+function trSeg(t){let v=AR_DICT[t];if(v===undefined){for(const [rx,f] of AR_RX){const m=t.match(rx);if(m){v=f(m);break;}}}return v;}
+function trAr(str){const t=str.trim();if(!t)return null;let v=trSeg(t);
+  if(v===undefined&&t.includes(' · ')){const end=t.endsWith('.')?'.':'',parts=(end?t.slice(0,-1):t).split(' · '),tr=parts.map(trSeg);if(tr.some(x=>x!==undefined))v=parts.map((x,i)=>tr[i]===undefined?x:tr[i]).join(' · ')+end;}
+  return v===undefined?null:str.replace(t,v);}
+function trNode(root){if(root.nodeType===3){const v=trAr(root.nodeValue);if(v!==null&&v!==root.nodeValue)root.nodeValue=v;return;}
+  if(root.nodeType!==1||root.closest&&root.closest('[translate=no],textarea,.deliv,.md'))return;
+  for(const a of ['placeholder','aria-label','title']){const x=root.getAttribute&&root.getAttribute(a);if(x){const v=trAr(x);if(v!==null&&v!==x)root.setAttribute(a,v);}}
+  const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);let n;
+  while((n=w.nextNode())){if(n.nodeType===3){if(n.parentElement&&n.parentElement.closest('[translate=no],textarea,script,style'))continue;const v=trAr(n.nodeValue);if(v!==null&&v!==n.nodeValue)n.nodeValue=v;}
+    else for(const a of ['placeholder','aria-label','title']){const x=n.getAttribute(a);if(x){const v=trAr(x);if(v!==null&&v!==x)n.setAttribute(a,v);}}}}
+if(LANG==='ar'){document.title='استوديو تيكيديس';trNode(document.body);
+  new MutationObserver(ms=>{for(const m of ms){if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(trNode);}}).observe(document.body,{childList:true,subtree:true,characterData:true});}
 db.auth.getSession().then(({data})=>{if(data.session){applyUser(data.session.user);showApp();}else showLogin();});
 })();
 </script>
