@@ -421,7 +421,28 @@
   .qline{display:flex;justify-content:space-between;gap:12px;padding:4px 0;font-size:.9rem} .qline .k{color:var(--muted)} .qline .v{font-family:var(--mono)}
   .qbig{font-family:var(--display);font-weight:600;font-size:2.4rem;color:var(--accent);line-height:1;margin-top:8px}
   .set-sec{border-top:1px solid var(--line);padding-top:16px;margin-top:16px}
-  .set-sec:first-of-type{border-top:0;padding-top:0;margin-top:0}
+  .set-sec:first-of-type,.set-sec.first{border-top:0;padding-top:0;margin-top:0}
+  .settabs{margin:2px 0 18px}
+  .set-h{font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+  .pausebox{border:1px solid var(--line-strong);border-radius:14px;padding:14px 14px 2px;margin-bottom:6px}
+  .pausebox.on{border-color:rgba(245,196,81,.55);background:rgba(245,196,81,.08)}
+  .sw{display:flex;gap:12px;align-items:flex-start;margin:4px 0 14px;cursor:pointer;position:relative}
+  .sw input{position:absolute;opacity:0;width:44px;height:26px;margin:0;cursor:pointer}
+  .swt{flex:none;position:relative;width:44px;height:26px;border-radius:999px;background:var(--field);border:1px solid var(--muted);transition:background .15s,border-color .15s;margin-top:1px}
+  .swt::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:18px;height:18px;border-radius:50%;background:var(--muted);transition:transform .15s,background .15s}
+  .sw input:checked+.swt{background:var(--accent);border-color:var(--accent)}
+  .sw input:checked+.swt::after{background:var(--accent-ink);transform:translateX(18px)}
+  [dir=rtl] .sw input:checked+.swt::after{transform:translateX(-18px)}
+  #sPaused:checked+.swt{background:var(--amber);border-color:var(--amber)}
+  .sw input:focus-visible+.swt{outline:2px solid var(--accent);outline-offset:2px}
+  .sw input:disabled+.swt{opacity:.5}
+  .sw .nm{font-weight:600} .sw .rg{font-size:.82rem;color:var(--subtle)}
+  @media (prefers-reduced-motion:reduce){.swt,.swt::after{transition:none}}
+  .cnt{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;margin-inline-start:6px;border-radius:999px;background:#C81E1E;color:#fff;font-size:.72rem;font-weight:700;line-height:1;vertical-align:1px}
+  .projtools .linkbtn{margin-inline-start:auto}
+  .projtools .chips{margin-bottom:0}
+  .projtools .newbtn{margin-left:0}
+  #quoteTools{justify-content:flex-end} #quoteTools:empty{display:none}
   .set-sec h3{display:flex;align-items:center;gap:8px;font-size:1rem;margin:0 0 4px}
   .set-sec h3 .ic{color:var(--accent)}
   .set-sec p{margin:0 0 12px;font-size:.84rem;color:var(--subtle)}
@@ -670,7 +691,6 @@
       <svg class="mark" viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="13" fill="var(--elev-2)" stroke="var(--line-strong)"/><circle class="ring" cx="24" cy="24" r="11" fill="none" stroke="var(--accent)" stroke-width="3.4" stroke-linecap="round"/><circle cx="24" cy="24" r="4.2" fill="var(--accent)"/></svg>
       <span class="wm"><b>TEKYDIS</b><span>Studio</span></span>
     </a>
-    <button class="btn newbtn" id="newBtn" type="button"></button>
     <button class="hpill warn" id="needsPill" type="button" hidden aria-label="Things waiting on you"></button>
     <span class="hpill sync" id="conn"><span class="dot"></span><span id="connTxt">Connecting…</span></span>
     <div class="user">
@@ -680,6 +700,7 @@
       </button>
       <div class="menu" id="umenu" role="menu" hidden>
         <div class="mhead"><b id="mName">Idris Hedhibi</b><span id="mEmail"></span></div>
+        <button class="mi" role="menuitem" data-set="studio"></button>
         <button class="mi" role="menuitem" data-set="profile"></button>
         <button class="mi" role="menuitem" data-set="email"></button>
         <button class="mi" role="menuitem" data-set="password"></button>
@@ -722,16 +743,16 @@
   </section>
 
   <section id="view-pipeline" role="tabpanel" aria-labelledby="tab-pipeline" hidden>
-    <div class="chips" id="pipeFilters">
+    <div class="projtools" id="pipeTools"><div class="chips" id="pipeFilters">
       <button class="fchip" data-f="open" aria-pressed="true">Open</button><button class="fchip" data-f="won" aria-pressed="false">Won</button>
       <button class="fchip" data-f="lost" aria-pressed="false">Lost</button><button class="fchip" data-f="all" aria-pressed="false">All</button>
-    </div>
+    </div></div>
     <div id="pipeBody"></div>
   </section>
-  <section id="view-quotes" role="tabpanel" aria-labelledby="tab-quotes" hidden><div id="quoteBody"></div></section>
+  <section id="view-quotes" role="tabpanel" aria-labelledby="tab-quotes" hidden><div class="projtools" id="quoteTools"></div><div id="quoteBody"></div></section>
   <section id="view-projects" role="tabpanel" aria-labelledby="tab-projects" hidden>
-    <div class="projtools"><div class="segc" role="group" aria-label="Project type" id="projType"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="ongoing" aria-pressed="false">Ongoing</button><button type="button" data-f="delivered" aria-pressed="false">Delivered</button></div>
-      <button type="button" class="linkbtn" id="projArch"></button></div>
+    <div class="projtools"><div class="segc" role="group" aria-label="Project type" id="projType"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="ongoing" aria-pressed="false">Ongoing<span class="cnt" id="nOngoing" aria-hidden="true" hidden></span><span class="sr" id="nOngoingSr"></span></button><button type="button" data-f="delivered" aria-pressed="false">Delivered</button></div>
+      <button type="button" class="linkbtn" id="projArch"></button><button class="btn newbtn" id="newBtn" type="button" hidden></button></div>
     <div id="projBody"></div>
   </section>
   <section id="view-project" aria-label="Project" hidden>
@@ -860,37 +881,45 @@
 <!-- ============ SETTINGS MODAL ============ -->
 <div class="modal" id="sModal" role="dialog" aria-modal="true" aria-labelledby="smTitle" aria-hidden="true">
   <button class="mx" data-close aria-label="Close"></button>
-  <h2 id="smTitle" data-ic="sliders">Account settings</h2>
-  <section class="set-sec" id="set-profile">
+  <h2 id="smTitle" data-ic="sliders">Settings</h2>
+  <div class="segc settabs" id="setTabs" role="group" aria-label="Settings sections"><button type="button" data-g="studio" aria-pressed="true">Studio</button><button type="button" data-g="profile" aria-pressed="false">Profile</button><button type="button" data-g="security" aria-pressed="false">Login &amp; security</button></div>
+  <section class="set-sec" id="set-profile" data-g="profile">
     <h3 data-ic="user">Profile</h3><p>How you appear across the studio.</p>
     <div class="fgrid"><div class="field"><label class="lbl" for="sName">Name</label><input type="text" id="sName"></div><div class="field"><label class="lbl" for="sTitle">Position</label><input type="text" id="sTitle"></div></div>
     <button class="btn sm" id="sSaveProfile" type="button"></button><div class="formmsg" id="sMsgProfile" role="status"></div>
   </section>
-  <section class="set-sec" id="set-email">
+  <section class="set-sec" id="set-email" data-g="security">
     <h3 data-ic="mail">Login email</h3><p id="sEmailNow">Current: —</p>
     <div class="field"><label class="lbl" for="sEmail">New email</label><input type="email" id="sEmail" autocomplete="email"></div>
     <button class="btn sm" id="sSaveEmail" type="button"></button><div class="formmsg" id="sMsgEmail" role="status"></div>
   </section>
-  <section class="set-sec" id="set-password">
+  <section class="set-sec" id="set-password" data-g="security">
     <h3 data-ic="key">Password</h3><p>At least 8 characters. You stay signed in on this device.</p>
     <div class="fgrid"><div class="field"><label class="lbl" for="sPass">New password</label><input type="password" id="sPass" autocomplete="new-password" minlength="8"></div><div class="field"><label class="lbl" for="sPass2">Repeat it</label><input type="password" id="sPass2" autocomplete="new-password" minlength="8"></div></div>
     <button class="btn sm" id="sSavePass" type="button"></button><div class="formmsg" id="sMsgPass" role="status"></div>
   </section>
-  <section class="set-sec" id="set-studio">
-    <h3 data-ic="bell">Studio controls</h3><p>The CEO reads these before every run. Change them any time.</p>
-    <label class="chk tog"><input type="checkbox" id="sPaused"><span><span class="nm">Pause the studio</span><br><span class="rg">No agent starts any work until you turn this off.</span></span></label>
+  <section class="set-sec" id="set-studio" data-g="studio">
+    <div class="pausebox" id="pauseBox">
+      <label class="sw"><input type="checkbox" role="switch" id="sPaused"><span class="swt" aria-hidden="true"></span><span><span class="nm">Pause the studio</span><br><span class="rg" id="pauseState">No agent starts any work while this is on.</span></span></label>
+    </div>
+    <h4 class="set-h">Approvals and limits</h4>
     <div class="fgrid">
       <div class="field"><label class="lbl" for="sApproval">Deliverables that need your approval</label><select id="sApproval"><option value="all">Every deliverable</option><option value="design_build">Design and build only</option><option value="none">None (the CEO decides)</option></select></div>
-      <div class="field"><label class="lbl" for="sMaxTasks">Max tasks per run</label><select id="sMaxTasks"><option value="1">1 (lightest on your plan)</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select></div>
+      <div class="field"><label class="lbl" for="sMaxTasks">Max tasks per run</label><select id="sMaxTasks"><option value="1">1 (lightest on your plan)</option><option value="2">2</option><option value="3">3</option><option value="5">5</option></select></div></div>
+    <h4 class="set-h">Working hours</h4>
+    <div class="fgrid">
       <div class="field"><label class="lbl" for="sHoursS">Studio works from</label><select id="sHoursS"></select></div>
       <div class="field"><label class="lbl" for="sHoursE">until</label><select id="sHoursE"></select></div>
       <div class="field"><label class="lbl" for="sCheck">Check the board every</label><select id="sCheck"><option value="5">5 minutes</option><option value="10">10 minutes</option><option value="15">15 minutes</option><option value="30">30 minutes</option><option value="60">1 hour</option></select></div>
-      <div class="field"><label class="lbl" for="sMaxRun">Stop a run after</label><select id="sMaxRun"><option value="60">1 hour</option><option value="120">2 hours</option><option value="180">3 hours</option></select></div>
+      <div class="field"><label class="lbl" for="sMaxRun">Stop a run after</label><select id="sMaxRun"><option value="60">1 hour</option><option value="120">2 hours</option><option value="180">3 hours</option></select></div></div>
+    <h4 class="set-h">Alerts</h4>
+    <div class="fgrid">
       <div class="field"><label class="lbl" for="sStall">Flag a silent task as stuck after</label><select id="sStall"><option value="1">1 hour</option><option value="2">2 hours</option><option value="4">4 hours</option><option value="8">8 hours</option><option value="24">24 hours</option></select></div></div>
-    <label class="chk tog"><input type="checkbox" id="sManual"><span><span class="nm">Manual control</span><br><span class="rg">Lets you change task status, agent, stage and order yourself. Off = the CEO manages tasks, and you answer, comment and approve. Emergencies only; every change is logged.</span></span></label>
     <button class="btn sm" id="sSaveStudio" type="button"></button><div class="formmsg" id="sMsgStudio" role="status"></div>
+    <h4 class="set-h">Advanced</h4>
+    <label class="sw"><input type="checkbox" role="switch" id="sManual"><span class="swt" aria-hidden="true"></span><span><span class="nm">Manual control</span><br><span class="rg">Lets you change task status, agent, stage and order yourself. Off = the CEO manages tasks; you answer, comment and approve. Emergencies only; every change is logged. Applies at once.</span></span></label>
   </section>
-  <section class="set-sec">
+  <section class="set-sec" data-g="security">
     <h3 data-ic="shield">Sessions</h3><p>Signs you out on every phone and computer, including this one.</p>
     <button class="btn danger sm" id="sOutAll" type="button"></button>
   </section>
@@ -1011,10 +1040,10 @@ function staticLabels(){
   $('nPwBtn').innerHTML=btnHtml('save','Save password');
   document.querySelectorAll('.mx').forEach(b=>b.innerHTML=ic('x'));
   document.querySelectorAll('[data-label="Cancel"]').forEach(b=>b.innerHTML=btnHtml('x','Cancel'));
-  $('send').innerHTML=btnHtml('send','Send');$('setCoords').innerHTML=btnHtml('crosshair','Set');$('psubmit').innerHTML=btnHtml('send','Send to the studio');$('pdraft').innerHTML=btnHtml('save','Save as draft');$('sSaveStudio').innerHTML=btnHtml('save','Save');
+  $('send').innerHTML=btnHtml('send','Send');$('setCoords').innerHTML=btnHtml('crosshair','Set');$('psubmit').innerHTML=btnHtml('send','Send to the studio');$('pdraft').innerHTML=btnHtml('save','Save as draft');$('sSaveStudio').innerHTML=btnHtml('save','Save changes');
   $('lSave').innerHTML=btnHtml('save','Save lead');$('lDelete').innerHTML=btnHtml('trash','Delete');
   $('qAddCustom').innerHTML=btnHtml('plus','Add custom item');$('qSave').innerHTML=btnHtml('save','Save as pending');$('qSavePdf').innerHTML=btnHtml('download','Save + PDF');
-  document.querySelector('[data-set=profile]').innerHTML=btnHtml('sliders','Account settings');document.querySelector('[data-set=email]').innerHTML=btnHtml('mail','Change login email');
+  document.querySelector('[data-set=studio]').innerHTML=btnHtml('sliders','Studio controls');document.querySelector('[data-set=profile]').innerHTML=btnHtml('user','Profile');document.querySelector('[data-set=email]').innerHTML=btnHtml('mail','Change login email');
   document.querySelector('[data-set=password]').innerHTML=btnHtml('key','Change password');$('signout').innerHTML=btnHtml('logout','Sign out');
   $('sSaveProfile').innerHTML=btnHtml('save','Save profile');$('sSaveEmail').innerHTML=btnHtml('mail','Send confirmation');$('sSavePass').innerHTML=btnHtml('key','Update password');$('sOutAll').innerHTML=btnHtml('logout','Sign out everywhere');
   document.querySelectorAll('.tab[data-ic]').forEach(t=>{if(!t.dataset.icDone){t.dataset.icDone='1';t.insertAdjacentHTML('afterbegin',ic(t.dataset.ic));}});
@@ -1088,11 +1117,14 @@ setInterval(()=>{if(!$('app').hidden)renderHello();},30000);
 
 /* ---------- tabs ---------- */
 const NEW_LABEL={pipeline:['funnel','New lead'],quotes:['receipt','New quote']};
+// the "New …" action lives on the toolbar of the view it belongs to (right side), never in the global header
+function placeNewBtn(){const nb=$('newBtn'),host={projects:document.querySelector('#view-projects .projtools'),pipeline:$('pipeTools'),quotes:$('quoteTools')}[tab];
+  if(!host||onProject()){nb.hidden=true;return;}host.appendChild(nb);nb.hidden=tab==='projects'&&!(S.projects||[]).length;}
 function showTab(t){
-  if(onProject()){OPEN_PID=null;SIDE=null;$('view-project').hidden=true;$('newBtn').hidden=false;document.body.style.overflow='';if(location.hash.startsWith('#/project/'))history.pushState(null,'',location.pathname+location.search);}
+  if(onProject()){OPEN_PID=null;SIDE=null;$('view-project').hidden=true;document.body.style.overflow='';if(location.hash.startsWith('#/project/'))history.pushState(null,'',location.pathname+location.search);}
   tab=t;lsSet('ts_tab',t);
   ['overview','floor','pipeline','quotes','projects','prospects'].forEach(k=>{$('view-'+k).hidden=k!==t;$('tab-'+k).setAttribute('aria-selected',String(k===t));});
-  const nl=NEW_LABEL[t]||['plus','New project'];$('newBtn').innerHTML=btnHtml(nl[0],nl[1]);
+  const nl=NEW_LABEL[t]||['plus','New project'];$('newBtn').innerHTML=btnHtml(nl[0],nl[1]);placeNewBtn();
   if(t==='floor') sizeFlow();
 }
 document.querySelectorAll('.tab').forEach(b=>b.addEventListener('click',()=>showTab(b.dataset.tab)));
@@ -1329,6 +1361,8 @@ function renderProjects(){
   const groups=F.arch?[['Archive',arch,'archive']]:[['Needs you',live.filter(p=>p.status!=='draft'&&p.status!=='done'&&needsMe(p)),'bell'],['In progress',live.filter(p=>isActive(p)&&!needsMe(p)),'activity'],['Drafts',live.filter(p=>p.status==='draft'),'edit'],['On hold',live.filter(p=>p.status==='on_hold'),'clipboard'],['Done',live.filter(p=>p.status==='done'),'check']];
   $('projArch').textContent=F.arch?'← Back to projects':`Archive (${arch.length})`;$('projArch').hidden=!F.arch&&!arch.length;
   $('projArch').onclick=()=>{F.arch=!F.arch;renderProjects();};
+  const nOn=S.projects.filter(isActive).length;$('nOngoing').textContent=nOn;$('nOngoing').hidden=!nOn;$('nOngoingSr').textContent=nOn?` (${nOn} ongoing)`:'';
+  if(tab==='projects')placeNewBtn();
   if(!S.projects.length){host.appendChild(emptyBig('No projects yet. Write a brief and the CEO assigns the team.','plus','New project',()=>openProjectModal()));return;}
   let any=false;groups.forEach(([title,list,icn])=>{if(!list.length)return;any=true;const g=document.createElement('section');g.className='projgrp';
     g.innerHTML=`<h3>${ic(icn,'sm')} ${title} <span class="n">${list.length}</span></h3>`;list.forEach(p=>g.appendChild(projCard(p)));host.appendChild(g);});
@@ -1407,7 +1441,7 @@ function openProject(p,tabName){if(!p)return;if(tabName)PTAB=tabName;
   $('pTabs').querySelectorAll('.ptab').forEach(b=>b.onclick=()=>{PTAB=b.dataset.pt;$('pTabs').querySelectorAll('.ptab').forEach(x=>x.setAttribute('aria-selected',String(x===b)));renderPPanel();});
   renderPHead();renderPPanel();renderSide();loadPEV();window.scrollTo({top:0});$('ppBack').focus({preventScroll:true});
 }
-function closeProject(toTab){OPEN_PID=null;SIDE=null;$('view-project').hidden=true;$('newBtn').hidden=false;if(location.hash.startsWith('#/project/'))history.pushState(null,'',location.pathname+location.search);showTab(toTab||PREV_TAB||'projects');}
+function closeProject(toTab){OPEN_PID=null;SIDE=null;$('view-project').hidden=true;if(location.hash.startsWith('#/project/'))history.pushState(null,'',location.pathname+location.search);showTab(toTab||PREV_TAB||'projects');}
 $('ppBack').innerHTML=btnHtml('arrow','Back');$('ppBack').querySelector('.ic').style.transform='rotate(180deg)';$('ppBack').onclick=()=>closeProject();
 addEventListener('popstate',()=>{const m=location.hash.match(/^#\/project\/(.+)$/);if(m){const p=S.projects.find(x=>x.id===m[1]);if(p)openProject(p);}else if(onProject())closeProject();});
 async function loadPEV(){const pid=OPEN_PID;if(!pid)return;const {data}=await db.from('events').select('*').eq('project_id',pid).order('created_at',{ascending:false}).limit(100);if(pid!==OPEN_PID)return;PEV=data||[];if(PTAB==='timeline'||PTAB==='agents')renderPPanel();}
@@ -1497,7 +1531,7 @@ async function deleteProject(p,typed,btn){const m=$('dzMsg');btn.disabled=true;m
 function renderPTasks(p,box){
   if(!TASKS_OK){box.innerHTML=`<div class="d-note" style="margin-top:14px">Tasks need the database update (build5.sql). Run it in Supabase, then refresh.</div>`;return;}
   const ts=tasksOf(p.id),man=MANUAL()&&!p.archived_at;
-  box.innerHTML=`<p class="d-note" style="margin:16px 0;font-size:.86rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment, and approve deliverables.'}</p>${ts.length?`<div class="segc" id="taskTabs" role="group" aria-label="Task view" style="margin:2px 0 14px">${[['active','In progress',ts.filter(x=>x.status!=='done').length],['done','Done',ts.filter(x=>x.status==='done').length]].map(o=>`<button type="button" data-tt="${o[0]}" aria-pressed="${PTASKTAB===o[0]}">${o[1]}${o[2]?' · '+o[2]:''}</button>`).join('')}</div>`:''}<div id="tList"></div>
+  box.innerHTML=`<p class="d-note" style="margin:16px 0;font-size:.86rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment, and approve deliverables.'}</p>${ts.length?`<div class="segc" id="taskTabs" role="group" aria-label="Task view" style="margin:2px 0 14px">${[['active','In progress',ts.filter(x=>x.status!=='done').length],['done','Done',ts.filter(x=>x.status==='done').length]].map(o=>`<button type="button" data-tt="${o[0]}" aria-pressed="${PTASKTAB===o[0]}">${o[1]}${o[2]?(o[0]==='active'?`<span class="cnt" aria-hidden="true">${o[2]}</span><span class="sr"> (${o[2]})</span>`:' · '+o[2]):''}</button>`).join('')}</div>`:''}<div id="tList"></div>
     ${!man?'':`<div class="d-sec">Add a task</div><form class="addtask" id="tAdd" style="grid-template-columns:1fr auto auto auto"><input type="text" id="tTitle" placeholder="e.g. Booking flow wireframes" aria-label="Task title" required>
       <select id="tStage" aria-label="Stage">${T_STAGES.map(x=>`<option>${x}</option>`).join('')}</select><select id="tAgent" aria-label="Assign to">${agentOpts('')}</select><button class="btn sm" type="submit">${btnHtml('plus','Add')}</button></form>`}`;
   const list=$('tList');
@@ -1669,9 +1703,26 @@ function openSettings(section){
   $('sName').value=USER.name;$('sTitle').value=USER.title;const hrs=[...Array(25).keys()].map(h=>`<option value="${h}">${h===24?'24:00 (midnight)':String(h).padStart(2,'0')+':00'}</option>`).join('');$('sHoursS').innerHTML=hrs;$('sHoursE').innerHTML=hrs;$('sHoursS').value=String(SET('hours_start'));$('sHoursE').value=String(SET('hours_end'));$('sCheck').value=String(SET('check_minutes'));$('sMaxRun').value=String(SET('max_run_minutes'));$('sStall').value=String(stallH());$('sPaused').checked=!!SET('paused');$('sApproval').value=SET('approval');$('sMaxTasks').value=String(SET('max_tasks_per_run'));$('sManual').checked=MANUAL();$('sEmailNow').textContent='Current: '+USER.email+'. We send a confirmation link to the new address; the change applies once you open it.';
   $('sEmail').value='';$('sPass').value='';$('sPass2').value='';['sMsgProfile','sMsgEmail','sMsgPass'].forEach(id=>{$(id).textContent='';$(id).className='formmsg';});
   openModal('sModal',section==='email'?'sEmail':section==='password'?'sPass':'sName');
-  const sec=$('set-'+(section||'profile'));if(sec)setTimeout(()=>sec.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'}),80);
+  setGroup(section==='email'||section==='password'?'security':section==='profile'?'profile':'studio');paintPause();$('sMsgStudio').textContent='';
 }
-function sMsg(id,t,k){$(id).className='formmsg'+(k?' '+k:'');$(id).textContent=t;}
+function sMsg(id,t,k){$(id).className='formmsg'+(k?' '+k:'');$(id).textContent=t;if(k==='ok')toast(t,'ok');else if(k==='err')toast(t,'err');}
+function setGroup(g){document.querySelectorAll('#sModal .set-sec').forEach(x=>{x.hidden=x.dataset.g!==g;x.classList.remove('first');});
+  const f=document.querySelector(`#sModal .set-sec[data-g="${g}"]`);if(f)f.classList.add('first');
+  document.querySelectorAll('#setTabs button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.g===g)));}
+document.querySelectorAll('#setTabs button').forEach(b=>b.addEventListener('click',()=>setGroup(b.dataset.g)));
+function paintPause(){const on=$('sPaused').checked;$('pauseBox').classList.toggle('on',on);
+  $('pauseState').textContent=on?'Paused: no agent starts any work. Turn this off to resume.':`Running: the CEO checks the board every ${SET('check_minutes')} minutes.`;}
+// switches apply at once (a switch never waits for a Save button)
+$('sPaused').addEventListener('change',async e=>{const v=e.target.checked;
+  if(!S.settings){e.target.checked=!v;return sMsg('sMsgStudio','Studio controls need the database update (build 10). Run it in Supabase first.','err');}
+  e.target.disabled=true;const r=await db.from('studio_settings').upsert({key:'paused',value:v,updated_at:new Date().toISOString()});e.target.disabled=false;
+  if(r.error){e.target.checked=!v;paintPause();return toast("Couldn't change it: "+r.error.message,'err');}
+  await logEvent('settings',v?'Studio paused':'Studio resumed');paintPause();
+  toast(v?'Studio paused. No agent starts any work.':'Studio running. The CEO picks up work within a few minutes.','ok');load(true);});
+$('sManual').addEventListener('change',async e=>{const v=e.target.checked;e.target.disabled=true;
+  const u=await db.auth.updateUser({data:{manual_control:v}});e.target.disabled=false;
+  if(u.error){e.target.checked=!v;return toast("Couldn't change it: "+u.error.message,'err');}
+  applyUser(u.data.user);await logEvent('settings','Manual control '+(v?'on':'off'));toast(v?'Manual control on':'Manual control off: the CEO manages tasks','ok');load(true);});
 $('sSaveProfile').onclick=async()=>{const full_name=$('sName').value.trim(),title=$('sTitle').value.trim();if(!full_name)return sMsg('sMsgProfile','Add your name.','err');
   const {data,error}=await db.auth.updateUser({data:{full_name,title:title||'Founder'}});if(error)return sMsg('sMsgProfile',"Couldn't save: "+error.message,'err');applyUser(data.user);renderHello();sMsg('sMsgProfile','Saved.','ok');};
 $('sSaveEmail').onclick=async()=>{const email=$('sEmail').value.trim();if(!email||!/^\S+@\S+\.\S+$/.test(email))return sMsg('sMsgEmail','Type a valid email address.','err');
@@ -1679,13 +1730,15 @@ $('sSaveEmail').onclick=async()=>{const email=$('sEmail').value.trim();if(!email
   sMsg('sMsgEmail','Check '+email+' (and your current inbox) for a confirmation link. Your login stays the same until you confirm.','ok');};
 $('sSavePass').onclick=async()=>{const a=$('sPass').value,b=$('sPass2').value;if(a.length<8)return sMsg('sMsgPass','Use at least 8 characters.','err');if(a!==b)return sMsg('sMsgPass',"The two passwords don't match.",'err');
   const {error}=await db.auth.updateUser({password:a});if(error)return sMsg('sMsgPass',"Couldn't update: "+error.message,'err');$('sPass').value='';$('sPass2').value='';sMsg('sMsgPass','Password updated.','ok');};
-$('sSaveStudio').onclick=async()=>{const vals={paused:$('sPaused').checked,approval:$('sApproval').value,max_tasks_per_run:Number($('sMaxTasks').value),stall_hours:Number($('sStall').value),hours_start:Number($('sHoursS').value),hours_end:Number($('sHoursE').value),check_minutes:Number($('sCheck').value),max_run_minutes:Number($('sMaxRun').value)};
+$('sSaveStudio').onclick=async()=>{const vals={approval:$('sApproval').value,max_tasks_per_run:Number($('sMaxTasks').value),stall_hours:Number($('sStall').value),hours_start:Number($('sHoursS').value),hours_end:Number($('sHoursE').value),check_minutes:Number($('sCheck').value),max_run_minutes:Number($('sMaxRun').value)};
   if(!S.settings)return sMsg('sMsgStudio','Studio controls need the database update (build 10). Run it in Supabase first.','err');
-  for(const [key,value] of Object.entries(vals)){const r=await db.from('studio_settings').upsert({key,value,updated_at:new Date().toISOString()});if(r.error)return sMsg('sMsgStudio',"Couldn't save: "+r.error.message,'err');}
   const changed=Object.keys(vals).filter(k=>JSON.stringify(vals[k])!==JSON.stringify(SET(k)));
-  const u=await db.auth.updateUser({data:{manual_control:$('sManual').checked}});if(u.error)return sMsg('sMsgStudio',"Couldn't save: "+u.error.message,'err');applyUser(u.data.user);
-  if(changed.length)await logEvent('settings','Studio controls changed: '+changed.map(k=>k+' → '+JSON.stringify(vals[k])).join(', '));
-  sMsg('sMsgStudio','Saved.'+(vals.paused?' The studio is paused.':''),'ok');load(true);};
+  if(!changed.length)return sMsg('sMsgStudio','Nothing changed: these are already saved.');
+  const b=$('sSaveStudio');b.disabled=true;b.innerHTML=btnHtml('save','Saving…');
+  for(const key of changed){const r=await db.from('studio_settings').upsert({key,value:vals[key],updated_at:new Date().toISOString()});if(r.error){b.disabled=false;b.innerHTML=btnHtml('save','Save changes');return sMsg('sMsgStudio',"Couldn't save: "+r.error.message,'err');}}
+  await logEvent('settings','Studio controls changed: '+changed.map(k=>k+' → '+JSON.stringify(vals[k])).join(', '));
+  b.disabled=false;b.innerHTML=btnHtml('check','Saved');setTimeout(()=>{b.innerHTML=btnHtml('save','Save changes');},2500);
+  sMsg('sMsgStudio',`Studio controls saved (${changed.length} change${changed.length>1?'s':''}).`,'ok');load(true);};
 $('sOutAll').onclick=async()=>{const b=$('sOutAll');if(!b.dataset.c){b.dataset.c='1';b.innerHTML=btnHtml('logout','Tap again to sign out everywhere');setTimeout(()=>{b.dataset.c='';b.innerHTML=btnHtml('logout','Sign out everywhere');},3000);return;}
   await db.auth.signOut({scope:'global'});closeModals();showLogin();};
 
