@@ -727,7 +727,7 @@
   </section>
   <section id="view-quotes" role="tabpanel" aria-labelledby="tab-quotes" hidden><div id="quoteBody"></div></section>
   <section id="view-projects" role="tabpanel" aria-labelledby="tab-projects" hidden>
-    <div class="projtools"><div class="segc" role="group" aria-label="Project type" id="projType"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="delivery" aria-pressed="false">Delivery</button><button type="button" data-f="prospecting" aria-pressed="false">Prospecting</button></div>
+    <div class="projtools"><div class="segc" role="group" aria-label="Project type" id="projType"><button type="button" data-f="all" aria-pressed="true">All</button><button type="button" data-f="ongoing" aria-pressed="false">Ongoing</button><button type="button" data-f="delivered" aria-pressed="false">Delivered</button></div>
       <button type="button" class="linkbtn" id="projArch"></button></div>
     <div id="projBody"></div>
   </section>
@@ -1320,7 +1320,7 @@ function projCard(p){const b=document.createElement('button');b.className='item'
     <div class="ib2"><span class="status"><span class="sl"></span>${p.archived_at?'Archived':P_STATUS[p.status]||esc(p.status)}</span>${projFlags(p)}<span class="bar6"><i style="width:${Math.max(2,Math.min(100,p.progress||0))}%"></i></span><span class="meta">${ts.length?dn+'/'+ts.length+' tasks · ':''}${p.progress||0}%</span>${ic('chev','sm')}</div>`;
   b.onclick=()=>openProject(p,'overview');return b;}
 function renderProjects(){
-  const host=$('projBody');host.innerHTML='';const typ=p=>F.proj==='all'||p.pipeline===F.proj;
+  const host=$('projBody');host.innerHTML='';const typ=p=>F.proj==='all'||(F.proj==='ongoing'?isActive(p):F.proj==='delivered'?p.status==='done':true);
   const arch=S.projects.filter(p=>p.archived_at&&typ(p)),live=S.projects.filter(p=>!p.archived_at&&typ(p));
   const needsMe=p=>tasksOf(p.id).some(t=>['needs_you','review'].includes(t.status));
   const groups=F.arch?[['Archive',arch,'archive']]:[['Needs you',live.filter(p=>p.status!=='draft'&&p.status!=='done'&&needsMe(p)),'bell'],['In progress',live.filter(p=>isActive(p)&&!needsMe(p)),'activity'],['Drafts',live.filter(p=>p.status==='draft'),'edit'],['On hold',live.filter(p=>p.status==='on_hold'),'clipboard'],['Done',live.filter(p=>p.status==='done'),'check']];
@@ -1375,7 +1375,7 @@ function openAgent(a){
 let PEV=[];
 const curP=()=>S.projects.find(x=>x.id===OPEN_PID);
 const agentOpts=sel=>`<option value="">Unassigned</option>`+S.agents.slice().sort((a,b)=>roleOf(a).localeCompare(roleOf(b))).map(a=>`<option value="${esc(a.slug)}"${a.slug===sel?' selected':''}>${esc(roleOf(a))} · ${esc(nameOf(a))}</option>`).join('');
-let PREV_TAB='projects',SIDE=null;
+let PREV_TAB='projects',SIDE=null,PTASKTAB='active';
 const onProject=()=>!$('view-project').hidden;
 function openProject(p,tabName){if(!p)return;if(tabName)PTAB=tabName;
   if(!onProject())PREV_TAB=tab;OPEN_PID=p.id;PEV=[];SIDE=null;closeDrawer();
@@ -1476,12 +1476,15 @@ async function deleteProject(p,typed,btn){const m=$('dzMsg');btn.disabled=true;m
 function renderPTasks(p,box){
   if(!TASKS_OK){box.innerHTML=`<div class="d-note" style="margin-top:14px">Tasks need the database update (build5.sql). Run it in Supabase, then refresh.</div>`;return;}
   const ts=tasksOf(p.id),man=MANUAL()&&!p.archived_at;
-  box.innerHTML=`<p class="d-note" style="margin:16px 0;font-size:.86rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment, and approve deliverables.'}</p><div id="tList"></div>
+  box.innerHTML=`<p class="d-note" style="margin:16px 0;font-size:.86rem">${man?'<b style="color:var(--amber)">Manual control is on.</b> You can change tasks directly; every change is logged.':'The CEO manages these tasks. You answer questions, comment, and approve deliverables.'}</p>${ts.length?`<div class="segc" id="taskTabs" role="group" aria-label="Task view" style="margin:2px 0 14px">${[['active','In progress',ts.filter(x=>x.status!=='done').length],['done','Done',ts.filter(x=>x.status==='done').length]].map(o=>`<button type="button" data-tt="${o[0]}" aria-pressed="${PTASKTAB===o[0]}">${o[1]}${o[2]?' · '+o[2]:''}</button>`).join('')}</div>`:''}<div id="tList"></div>
     ${!man?'':`<div class="d-sec">Add a task</div><form class="addtask" id="tAdd" style="grid-template-columns:1fr auto auto auto"><input type="text" id="tTitle" placeholder="e.g. Booking flow wireframes" aria-label="Task title" required>
       <select id="tStage" aria-label="Stage">${T_STAGES.map(x=>`<option>${x}</option>`).join('')}</select><select id="tAgent" aria-label="Assign to">${agentOpts('')}</select><button class="btn sm" type="submit">${btnHtml('plus','Add')}</button></form>`}`;
   const list=$('tList');
+  box.querySelectorAll('#taskTabs button').forEach(b=>b.onclick=()=>{PTASKTAB=b.dataset.tt;renderPPanel();});
   if(!ts.length)list.innerHTML=`<p class="d-note">No tasks yet.${p.status==='draft'?' This is a draft, so the studio won\'t start it until you send it.':' The CEO breaks the brief into tasks when it picks the project up.'}</p>`;
-  ts.map((t,ix)=>({t,ix})).reverse().forEach(({t,ix})=>{const st=tState(t),cs=commentsOf(t.id),last=cs[cs.length-1],a=S.agents.find(x=>x.slug===t.agent),d=document.createElement('article');
+  const rows=ts.map((t,ix)=>({t,ix})).filter(({t})=>PTASKTAB==='done'?t.status==='done':t.status!=='done');
+  if(ts.length&&!rows.length)list.innerHTML=`<p class="d-note">${PTASKTAB==='done'?'No finished tasks yet.':'Nothing in progress right now — check the Done tab.'}</p>`;
+  rows.forEach(({t,ix})=>{const st=tState(t),cs=commentsOf(t.id),last=cs[cs.length-1],a=S.agents.find(x=>x.slug===t.agent),d=document.createElement('article');
     d.className='task2'+(SIDE&&SIDE.tid===t.id?' sel':'');d.dataset.s=st;
     const hasOut=(t.output_url||'').startsWith('storage:'),review=t.status==='review'&&!p.archived_at,asking=t.status==='needs_you'&&!p.archived_at;
     d.innerHTML=`<div class="t1"><div class="lft"><span class="tno">#${ix+1}</span>${t.stage?`<span class="stg">${esc(t.stage)}</span>`:''}</div><div class="rgt">${hasOut?`<button class="btn sec sm" data-act="view">${btnHtml('ext','Open deliverable')}</button>`:''}<span class="status"><span class="sl"></span>${esc(tLabel(t))}</span></div></div>
@@ -1528,7 +1531,10 @@ async function requestClientVersion(t,btn){if(btn)btn.disabled=true;
   await logEvent('client_version','You asked for a client PDF of #'+taskNo(t)+' '+t.title,t.project_id);toast('Requested. The CEO adds a Brand Designer task on the next run.','ok');load(true);}
 async function approveTask(t,btn){if(btn)btn.disabled=true;await db.from('task_comments').insert({task_id:t.id,project_id:t.project_id,author:'founder',body:'Approved.'});
   const r=await db.from('tasks').update({status:'done'}).eq('id',t.id);if(r.error){if(btn)btn.disabled=false;toast("Couldn't approve: "+r.error.message,'err');return;}
-  await logEvent('approved','You approved #'+taskNo(t)+' '+t.title,t.project_id);toast('Approved','ok');load(true);}
+  await logEvent('approved','You approved #'+taskNo(t)+' '+t.title,t.project_id);
+  let amsg='Approved';const ag=S.agents.find(x=>x.slug===t.agent);
+  if(ag){let xp=(ag.xp||0)+40,lvl=ag.level||1;while(xp>=100&&lvl<10){xp-=100;lvl++;}await db.from('agents').update({xp,level:lvl}).eq('id',ag.id);if(lvl>(ag.level||1))amsg=roleOf(ag)+' leveled up to L'+lvl+(LEVELS[lvl]?' · '+LEVELS[lvl]:'');}
+  toast(amsg,'ok');load(true);}
 
 /* ---------- side panel (conversation / deliverable) ---------- */
 function openSide(x){SIDE=x;renderSide(true);renderPPanel();}
